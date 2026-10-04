@@ -10,6 +10,7 @@ Phase 2 (market data) done: cleaned daily price panel for the universe + `^NSEI`
 Phase 3 (portfolio engine) done: portfolio API with valuation, weights and P/L for stocks, funds and cash.
 Phase 4 (risk engine) done: `GET /portfolio/{id}/risk` with volatility, Sharpe/Sortino, drawdown, VaR ×3, CVaR, beta, HHI, diversification and a 0–100 risk score ([config/risk_score.yaml](config/risk_score.yaml)).
 Phase 5 (funds + look-through) code done: fund analytics, effective exposure, overlap, stress. **Needs AMC holdings files** (below).
+Phase 6 (news pipeline) done: dedupe, company/sector mapping, importance, reliability, recency → `data/processed/news`.
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -39,6 +40,8 @@ cd frontend && npm run lint && npm run build
 ```
 
 ## News archiver (runs from Phase 1 so the backtest has news)
+Each run also rebuilds `data/processed/news` (`app.services.news_pipeline`). Company aliases are in
+`config/universe.yaml`; stop phrases, sector keywords and the importance weights are in `config/news_sources.yaml`.
 ```bash
 ./scripts/collect_news.sh                              # one run → data/raw/news/rss/<date>.jsonl
 cp scripts/com.portfolio-intelligence.news.plist ~/Library/LaunchAgents/

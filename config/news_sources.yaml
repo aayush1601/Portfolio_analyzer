@@ -10,3 +10,78 @@ rss:
   - name: livemint_markets
     url: https://www.livemint.com/rss/markets
     reliability: 0.85
+
+# ---- Phase 6: entity mapping and scoring. Heuristics and design assumptions, tuned on a labelled
+# sample later (plan §9: manual eval on 200 articles), not ground truth.
+
+# Company aliases live in universe.yaml and match case-sensitively, longest first. A stop phrase that
+# matches at the same position wins over a shorter alias and maps to nothing, e.g. "SBI Card" blocks "SBI".
+entity_stoplist:
+  - SBI Card
+  - SBI Cards
+  - SBI Mutual Fund
+  - SBI MF
+  - SBI Funds
+  - SBI Securities  # brokerage; often in analyst bylines
+  - SBI Caps
+  - SBI Capital Markets
+  - SBI General
+  - Reliance Power
+  - Reliance Infrastructure
+  - Reliance Infra
+  - Reliance Capital
+  - Reliance Communications
+  - Reliance Home Finance
+  - Reliance Nippon
+  - ITC Hotels
+  - ITC Maratha  # hotels, now ITC Hotels
+  - ITC Grand Chola
+  - ITC Gardenia
+  - ITC Maurya
+  - ITC Windsor
+  - Airtel Africa
+  - L&T Finance
+  - L&T Technology
+  - L&T Tech
+  - L&T Infotech
+  - Larsen & Toubro Technology
+  - Larsen & Toubro Infotech
+  - M&M Financial
+  - NTPC Green
+  - Bajaj Housing Finance
+  - Titan Intech
+  - Tata Motors Ltd  # post-demerger CV company, not TMPV (see universe.yaml note)
+
+# Sector-level phrases → universe sector. Case-insensitive unless the phrase contains an all-caps word.
+sector_keywords:
+  Information Technology: [IT stocks, IT sector, IT companies, IT shares, IT services, Nifty IT]
+  Financial Services: [bank stocks, banking stocks, banking sector, Bank Nifty, Nifty Bank, PSU banks, private banks, lenders, NBFC, NBFCs, insurers, Nifty Financial]
+  Automobile and Auto Components: [auto stocks, auto sector, automakers, carmakers, auto sales, two-wheeler, Nifty Auto]
+  Healthcare: [pharma stocks, pharma sector, pharmaceutical, drugmakers, hospital stocks, healthcare stocks, Nifty Pharma]
+  Fast Moving Consumer Goods: [FMCG, consumer goods]
+  Metals & Mining: [metal stocks, metal sector, steel prices, steelmakers, Nifty Metal, aluminium prices]
+  Oil Gas & Consumable Fuels: [oil marketing, OMC, OMCs, oil and gas, refiners, Nifty Oil, crude oil]
+  Power: [power stocks, power sector, power demand, electricity demand, Nifty Energy]
+  Telecommunication: [telecom, telcos]
+  Construction Materials: [cement stocks, cement prices, cement sector, cement makers]
+  Capital Goods: [capital goods, defence stocks, defence orders]
+  Construction: [infrastructure stocks, infra stocks, construction sector]
+  Consumer Durables: [consumer durables, jewellery, paint stocks]
+  Consumer Services: [quick commerce, food delivery, retail stocks]
+  Services: [airline stocks, aviation sector, port operators]
+
+# Words that mark a company event rather than commentary (case-insensitive, word-prefix match).
+event_keywords: [results, profit, loss, revenue, earnings, guidance, merger, acquisition, acquire, stake, block deal,
+  upgrade, downgrade, target price, rating, SEBI, RBI, penalty, fraud, probe, raid, dividend, buyback, bonus,
+  stock split, order, contract, default, resign, CEO, CFO, IPO, demerger, plant, recall]
+
+# importance = base + Σ applicable boosts, clipped to [0, 1].
+importance:
+  base: 0.2
+  symbol_in_headline: 0.4  # the company is the headline's subject
+  event_keyword: 0.2
+  focused: 0.1  # 1–2 companies, not a market round-up
+  sector_keyword: 0.1
+
+# recency weight = 0.5 ** (age_hours / half_life_hours)
+recency_half_life_hours: 24

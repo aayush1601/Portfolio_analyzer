@@ -35,6 +35,7 @@ stocks:
   sector: Healthcare
   aliases:
   - Apollo Hospitals Enterprise
+  - Apollo Hospitals
 - symbol: ASIANPAINT
   yahoo: ASIANPAINT.NS
   isin: INE021A01026
@@ -55,7 +56,9 @@ stocks:
   name: BSE Ltd.
   sector: Financial Services
   aliases:
-  - BSE
+  - BSE Ltd
+  - BSE shares
+  - BSE stock
 - symbol: BAJAJ-AUTO
   yahoo: BAJAJ-AUTO.NS
   isin: INE917I01010
@@ -84,6 +87,7 @@ stocks:
   sector: Capital Goods
   aliases:
   - Bharat Electronics
+  - BEL
 - symbol: BHARTIARTL
   yahoo: BHARTIARTL.NS
   isin: INE397D01024
@@ -122,6 +126,8 @@ stocks:
   sector: Automobile and Auto Components
   aliases:
   - Eicher Motors
+  - Eicher
+  - Royal Enfield
 - symbol: ETERNAL
   yahoo: ETERNAL.NS
   isin: INE758T01015
@@ -138,6 +144,7 @@ stocks:
   sector: Construction Materials
   aliases:
   - Grasim Industries
+  - Grasim
 - symbol: HCLTECH
   yahoo: HCLTECH.NS
   isin: INE860A01027
@@ -161,6 +168,7 @@ stocks:
   sector: Financial Services
   aliases:
   - HDFC Life Insurance Company
+  - HDFC Life
 - symbol: HINDALCO
   yahoo: HINDALCO.NS
   isin: INE038A01020
@@ -168,6 +176,7 @@ stocks:
   sector: Metals & Mining
   aliases:
   - Hindalco Industries
+  - Hindalco
 - symbol: HINDUNILVR
   yahoo: HINDUNILVR.NS
   isin: INE030A01027
@@ -205,6 +214,7 @@ stocks:
   aliases:
   - IndiGo
   - InterGlobe Aviation
+  - InterGlobe
 - symbol: JSWSTEEL
   yahoo: JSWSTEEL.NS
   isin: INE019A01038
@@ -219,6 +229,7 @@ stocks:
   sector: Financial Services
   aliases:
   - Jio Financial Services
+  - Jio Financial
 - symbol: KOTAKBANK
   yahoo: KOTAKBANK.NS
   isin: INE237A01036
@@ -251,6 +262,8 @@ stocks:
   sector: Automobile and Auto Components
   aliases:
   - Maruti Suzuki India
+  - Maruti
+  - Maruti Suzuki
 - symbol: MAXHEALTH
   yahoo: MAXHEALTH.NS
   isin: INE027H01010
@@ -258,6 +271,7 @@ stocks:
   sector: Healthcare
   aliases:
   - Max Healthcare Institute
+  - Max Healthcare
 - symbol: NTPC
   yahoo: NTPC.NS
   isin: INE733E01010
@@ -296,6 +310,9 @@ stocks:
   aliases:
   - RIL
   - Reliance Industries
+  - Reliance
+  - Reliance Jio
+  - Reliance Retail
 - symbol: SBILIFE
   yahoo: SBILIFE.NS
   isin: INE123W01016
@@ -303,6 +320,7 @@ stocks:
   sector: Financial Services
   aliases:
   - SBI Life Insurance Company
+  - SBI Life
 - symbol: SHRIRAMFIN
   yahoo: SHRIRAMFIN.NS
   isin: INE721A01047
@@ -326,6 +344,7 @@ stocks:
   sector: Healthcare
   aliases:
   - Sun Pharmaceutical Industries
+  - Sun Pharma
 - symbol: TCS
   yahoo: TCS.NS
   isin: INE467B01029
@@ -341,6 +360,7 @@ stocks:
   sector: Fast Moving Consumer Goods
   aliases:
   - Tata Consumer Products
+  - Tata Consumer
 - symbol: TMPV
   yahoo: TMPV.NS
   isin: INE155A01022
@@ -349,6 +369,8 @@ stocks:
   name: Tata Motors Passenger Vehicles Ltd.
   sector: Automobile and Auto Components
   aliases:
+  # Ambiguous since the Oct 2025 demerger (the CV business also trades under the Tata Motors name);
+  # review on the labelled news sample. "Tata Motors Ltd" is stop-listed in news_sources.yaml.
   - Tata Motors
   - Tata Motors Passenger Vehicles
 - symbol: TATASTEEL
@@ -372,6 +394,7 @@ stocks:
   sector: Consumer Durables
   aliases:
   - Titan Company
+  - Titan
 - symbol: TRENT
   yahoo: TRENT.NS
   isin: INE849A01020
@@ -386,6 +409,7 @@ stocks:
   sector: Construction Materials
   aliases:
   - UltraTech Cement
+  - UltraTech
 mutual_funds:
 - scheme_code: 120586
   name: ICICI Prudential Large Cap Fund
