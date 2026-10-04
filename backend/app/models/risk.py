@@ -11,6 +11,11 @@ class VaR(BaseModel):
     monte_carlo: float
 
 
+class Histogram(BaseModel):
+    edges: list[float]  # bin edges, daily return fractions (len = len(counts) + 1)
+    counts: list[int]
+
+
 class RiskReport(BaseModel):
     as_of: date
     lookback_days: int
@@ -33,4 +38,5 @@ class RiskReport(BaseModel):
     risk_score: int
     risk_band: str
     score_weights_version: str
+    return_histogram: Histogram  # the portfolio's daily returns over the window, for the tail chart
     notes: list[str]

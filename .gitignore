@@ -36,3 +36,7 @@ crash.log
 .DS_Store
 .idea/
 .vscode/
+
+# Impeccable working files (decision server, review captures)
+.impeccable/questions/
+.impeccable/review/

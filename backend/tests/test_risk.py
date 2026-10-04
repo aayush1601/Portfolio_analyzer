@@ -87,6 +87,7 @@ def test_risk_report_end_to_end():
     assert r.beta == pytest.approx(port.cov(window["a"]) / window["a"].var())
     assert r.hhi_direct == pytest.approx(0.625**2 + 0.375**2)
     assert r.notes == []
+    assert sum(r.return_histogram.counts) == 252 and len(r.return_histogram.edges) == 41
 
 
 def test_risk_report_notes_and_errors():

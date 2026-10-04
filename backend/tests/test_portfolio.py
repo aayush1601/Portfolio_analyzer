@@ -136,3 +136,9 @@ def test_exposure_and_stress_without_disclosures(client):
 
 def test_fund_not_in_universe_is_404(client):
     assert client.get("/mutual-funds/1").status_code == 404
+
+
+def test_reference_lists_universe_and_caps(client):
+    r = client.get("/reference").json()
+    assert len(r["stocks"]) == 50 and len(r["funds"]) == 15
+    assert r["caps"] == {"company": 0.15, "sector": 0.25}

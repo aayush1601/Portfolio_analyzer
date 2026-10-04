@@ -9,7 +9,7 @@ from statistics import NormalDist
 import numpy as np
 import pandas as pd
 
-from app.models.risk import RiskReport, VaR
+from app.models.risk import Histogram, RiskReport, VaR
 
 TRADING_DAYS = 252
 MC_SIMS = 10_000
@@ -121,6 +121,7 @@ def risk_report(
         hhi=hhi(weights),
     )
     score, band = risk_score(metrics, cfg)
+    counts, edges = np.histogram(r, bins=40)
     return RiskReport(
         as_of=R.index[-1].date(),
         lookback_days=lookback,
@@ -146,5 +147,6 @@ def risk_report(
         risk_score=score,
         risk_band=band,
         score_weights_version=cfg["version"],
+        return_histogram=Histogram(edges=edges.round(6).tolist(), counts=counts.tolist()),
         notes=notes,
     )

@@ -14,6 +14,7 @@ Phase 6 (news pipeline) done: dedupe, company/sector mapping, importance, reliab
 Phase 7 (FinBERT sentiment) done: per-headline scores, time-decayed per-ticker aggregates, labelled-sample evaluation.
 Phase 8 (news → portfolio impact) done: `GET /portfolio/{id}/news`, exposure-weighted impact with alert flag (`impact` in config/news_sources.yaml).
 Phase 11 basic (recommendations) done: `GET /portfolio/{id}/recommendations`, BUY/HOLD/REDUCE and INCREASE/HOLD/REDUCE/SWITCH with reasons and look-through safety caps ([config/recommendations.yaml](config/recommendations.yaml)). **MVP backend complete.**
+Phase 13 MVP pages: Look-through (default), Holdings, Risk + stress test, News, Actions at http://localhost:5173 (visual direction: `.impeccable/surfaces/`).
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)

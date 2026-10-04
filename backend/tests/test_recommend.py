@@ -80,6 +80,7 @@ def test_company_cap_forces_reduce_and_sector_cap_blocks_buy():
     # INFY scores high but IT is at 30% > 25%: BUY is downgraded to HOLD
     assert r["INFY"].final_score >= 60 and r["INFY"].action == "HOLD"
     assert r["INFY"].constraints_triggered == ["max_sector_exposure"]
+    assert r["INFY"].blocked_action == "BUY"
 
 
 def holdings(rows):

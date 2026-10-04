@@ -106,6 +106,7 @@ def recommend(
             action = "HOLD"
             reasons.append(f"Not enough evidence to recommend adding (only {', '.join(avail) or 'no'} score)")
 
+        proposed = action
         # Safety rules: look-through exposure can only make the action more cautious.
         if h.asset_type is AssetType.STOCK:
             if es > caps["company"]:
@@ -158,6 +159,7 @@ def recommend(
                 reasons=reasons,
                 constraints_triggered=constraints,
                 switch_to=switch_to,
+                blocked_action=proposed if action not in (proposed, "SWITCH") else None,
             )
         )
     notes = ["expected_return arrives with the Phase 9 model; final_score uses news, risk and portfolio fit"]

@@ -14,6 +14,7 @@ class Recommendation(BaseModel):
     reasons: list[str]
     constraints_triggered: list[str]
     switch_to: str | None = None
+    blocked_action: str | None = None  # what the scores proposed before a safety rule overrode it
 
 
 class RecommendationReport(BaseModel):

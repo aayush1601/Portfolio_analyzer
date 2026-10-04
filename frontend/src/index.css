@@ -1,1 +1,114 @@
+@import "@fontsource-variable/atkinson-hyperlegible-next";
+@import "@fontsource/atkinson-hyperlegible-mono/400.css";
+@import "@fontsource/atkinson-hyperlegible-mono/600.css";
 @import "tailwindcss";
+
+/* Chart Desk: a newspaper data-graphics desk for a working app. Light because it is projected in lit rooms
+   and printed in reports. Navy = held directly, ochre hatch = held through funds, vermilion = alerts only. */
+@theme {
+  --font-sans: "Atkinson Hyperlegible Next Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+
+  --color-ground: #f3f4f0;
+  --color-panel: #ffffff;
+  --color-ink: #18222d;
+  --color-ink-2: #4a5663;
+  --color-ink-3: #66707c;
+  --color-rule: #d6dad3;
+  --color-rule-soft: #e8eae5;
+  --color-bar: #163a5f;
+  --color-bar-ink: #e9eef4;
+  --color-bar-ink-2: #b3c2d3;
+  --color-direct: #1f4e79;
+  --color-direct-soft: #dbe5ef;
+  --color-via: #b8770c;
+  --color-via-soft: #f6ead2;
+  --color-alert: #b3261e;
+  --color-alert-soft: #f8e3e1;
+}
+
+:root {
+  color-scheme: light;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-via-soft);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-direct);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a {
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule) transparent;
+}
+
+input,
+select,
+button {
+  caret-color: var(--color-direct);
+}
+
+/* Numbers in tables and charts line up: monospace digits are tabular by construction. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* The look-through hatch: survives greyscale printing, where navy vs ochre alone would not. */
+.hatch-via {
+  background-image: repeating-linear-gradient(135deg, var(--color-via) 0 2px, var(--color-via-soft) 2px 5px);
+}
+.hatch-unmapped {
+  background-image: repeating-linear-gradient(135deg, var(--color-ink-3) 0 1px, var(--color-rule-soft) 1px 6px);
+}
+
+.headline {
+  text-wrap: balance;
+}
+
+/* One authored moment: chart marks draw out from their origin when data lands. */
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+.draw-x {
+  transform-origin: left center;
+  animation: grow-x 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media print {
+  :root {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
