@@ -333,18 +333,18 @@ chore: scaffold repository structure
 
 ## 8. Phase 0 checklist
 
-- [ ] `docs/requirements.md` (FR, NFR, out-of-scope, disclaimer)
-- [ ] `config/universe.yaml` (stocks + aliases, 15–20 funds, benchmark, risk-free proxy)
-- [ ] Spike run for all 6 data sources; `docs/data_sources.md` filled with verdicts
-- [ ] ADR 0001 news source decision
-- [ ] `docs/algorithms/exposure.md` with worked example
-- [ ] `docs/data_model.md` with `available_at` fields
-- [ ] DynamoDB access patterns + 3-table key design
-- [ ] `docs/api/openapi.yaml` draft
-- [ ] 5 diagrams (Mermaid) + 1 polished AWS diagram (draw.io)
-- [ ] GitHub repo, branch protection, folder skeleton, milestones/issues
+- [x] `docs/requirements.md` (FR, NFR, out-of-scope, disclaimer)
+- [x] `config/universe.yaml` (stocks + aliases, 15–20 funds, benchmark, risk-free proxy)
+- [~] Spike run: 5 of 6 sources done; Alpha Vantage waits on API key, AMC holdings history needs manual check
+- [x] ADR 0001 news source decision
+- [x] `docs/algorithms/exposure.md` with worked example
+- [x] `docs/data_model.md` with `available_at` fields
+- [x] DynamoDB access patterns + 3-table key design
+- [x] `docs/api/openapi.yaml` draft
+- [~] 5 diagrams (Mermaid) done; polished AWS draw.io diagram still to do
+- [~] Local repo + folder skeleton done; GitHub remote, branch protection, milestones still to do
 - [ ] AWS root MFA + US$5 budget alarm
 - [ ] Alpha Vantage key in local `.env` only
-- [ ] **News collector idea noted for Week 2** (start archiving news ASAP)
+- [x] **News collector idea noted for Week 2** (start archiving news ASAP)
 
 When this list is ticked, move to **Phase 1 — Foundation**.
