@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Local news archiver until Phase 15 moves it to EventBridge + Lambda. Runs while the Mac is awake. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.portfolio-intelligence.news</string>
+  <key>ProgramArguments</key><array><string>/Users/aayush_goyal/Documents/college/semester_5/CCD/CCD project/scripts/collect_news.sh</string></array>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>/Users/aayush_goyal/Documents/college/semester_5/CCD/CCD project/data/raw/news/collector.log</string>
+  <key>StandardErrorPath</key><string>/Users/aayush_goyal/Documents/college/semester_5/CCD/CCD project/data/raw/news/collector.log</string>
+</dict>
+</plist>

@@ -5,7 +5,7 @@
 > **Disclaimer:** academic decision-support and research project. Recommendations are hypothetical and are not financial advice. The system does not guarantee profit; it generates data-driven, explainable recommendations and evaluates their historical risk-adjusted performance through backtesting.
 
 ## Status
-Phase 0 (planning & architecture).
+Phase 1 (foundation) done: FastAPI + React skeleton, Docker, tests, RSS news archiver.
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -14,9 +14,34 @@ Phase 0 (planning & architecture).
 - [API spec](docs/api/openapi.yaml) · [Diagrams](docs/diagrams/README.md)
 - Research universe: [config/universe.yaml](config/universe.yaml)
 
+## Run locally
+Prerequisites: [uv](https://docs.astral.sh/uv/), Node 22+, Docker.
+
+```bash
+cp .env.example .env                                   # add keys; never commit .env
+docker compose up --build                              # API :8000, UI :5173
+```
+
+Without Docker:
+```bash
+cd backend && uv sync && uv run uvicorn app.main:app --reload
+cd frontend && npm install && npm run dev
+```
+
+Checks:
+```bash
+cd backend && uv run pytest && uv run ruff check . && uv run ruff format --check .
+cd frontend && npm run lint && npm run build
+```
+
+## News archiver (runs from Phase 1 so the backtest has news)
+```bash
+./scripts/collect_news.sh                              # one run → data/raw/news/rss/<date>.jsonl
+cp scripts/com.portfolio-intelligence.news.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.portfolio-intelligence.news.plist   # every 30 min while awake
+```
+
 ## Phase 0 feasibility spike
 ```bash
-python3 -m venv .venv && .venv/bin/pip install yfinance requests pandas pyyaml
-cp .env.example .env   # add ALPHAVANTAGE_API_KEY
-.venv/bin/python spikes/check_sources.py
+cd backend && uv sync --group spikes && uv run python ../spikes/check_sources.py
 ```

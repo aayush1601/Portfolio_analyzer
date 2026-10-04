@@ -1,0 +1,12 @@
+# News sources. `reliability` (0-1) feeds the News Impact score in Phase 8.
+# Initial values are design assumptions, to be tuned experimentally — not ground truth.
+rss:
+  - name: economictimes_markets
+    url: https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms
+    reliability: 0.85
+  - name: moneycontrol_business
+    url: https://www.moneycontrol.com/rss/business.xml
+    reliability: 0.8
+  - name: livemint_markets
+    url: https://www.livemint.com/rss/markets
+    reliability: 0.85
