@@ -8,6 +8,7 @@
 Phase 1 (foundation) done: FastAPI + React skeleton, Docker, tests, RSS news archiver.
 Phase 2 (market data) done: cleaned daily price panel for the universe + `^NSEI` + `^INDIAVIX` in Parquet.
 Phase 3 (portfolio engine) done: portfolio API with valuation, weights and P/L for stocks, funds and cash.
+Phase 4 (risk engine) done: `GET /portfolio/{id}/risk` with volatility, Sharpe/Sortino, drawdown, VaR ×3, CVaR, beta, HHI, diversification and a 0–100 risk score ([config/risk_score.yaml](config/risk_score.yaml)).
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)

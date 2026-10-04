@@ -1,0 +1,13 @@
+# 0-100 portfolio risk score (FR5). Bump `version` whenever anything below changes; it is returned
+# with every score so stored snapshots stay comparable.
+version: v1
+# Each metric maps linearly onto 0-100: `low` scores 0, `high` scores 100, clipped outside.
+# Weights are normalised to sum to 1. VaR is historical 1-day at 95%, whatever confidence was requested.
+components:
+  volatility_ann: { weight: 0.30, low: 0.05, high: 0.40 }
+  max_drawdown: { weight: 0.20, low: 0.0, high: -0.50 }
+  var_1d_95: { weight: 0.20, low: 0.0, high: 0.05 }
+  beta: { weight: 0.15, low: 0.5, high: 1.5 }
+  hhi: { weight: 0.15, low: 0.05, high: 0.50 }
+# Upper bound (inclusive) of each band, in order.
+bands: { Low: 33, Moderate: 66, High: 100 }

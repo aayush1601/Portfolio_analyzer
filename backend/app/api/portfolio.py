@@ -1,15 +1,21 @@
-"""Portfolio routes (FR2, FR3): create, list, value, replace holdings. Contract: docs/api/openapi.yaml."""
+"""Portfolio routes (FR2, FR3, FR5): create, list, value, replace holdings, risk.
 
-from datetime import date
+Contract: docs/api/openapi.yaml.
+"""
+
+from datetime import date, timedelta
 from functools import lru_cache
 from typing import Annotated
 
+import pandas as pd
 import yaml
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from app.analytics.portfolio import MissingPrice, value_portfolio
+from app.analytics.risk import asset_returns, risk_report
 from app.config import get_settings
 from app.models.portfolio import AssetType, Holding, Holdings, Portfolio, PortfolioCreate, PortfolioSnapshot
+from app.models.risk import RiskReport
 from app.services.market_data import load_prices
 from app.services.nav_data import load_navs
 from app.services.portfolio_store import PID_PATTERN, PortfolioStore
@@ -28,9 +34,13 @@ def get_store() -> PortfolioStore:
     return PortfolioStore(s.data_dir / "portfolios", s.config_dir / "demo_portfolios.yaml")
 
 
+def read_config(name: str) -> dict:
+    return yaml.safe_load((get_settings().config_dir / name).read_text())
+
+
 @lru_cache
 def universe_assets() -> dict[AssetType, set[str]]:
-    u = yaml.safe_load((get_settings().config_dir / "universe.yaml").read_text())
+    u = read_config("universe.yaml")
     return {
         AssetType.STOCK: {s["symbol"] for s in u["stocks"]},
         AssetType.MF: {str(f["scheme_code"]) for f in u["mutual_funds"]},
@@ -68,17 +78,54 @@ def list_portfolios(user: User, store: Store) -> list[dict]:
     return [p.model_dump(include={"portfolio_id", "name", "created_at"}) for p in store.list(user)]
 
 
+def load_market(since: date) -> tuple[pd.DataFrame, pd.DataFrame]:
+    data_dir = get_settings().data_dir
+    try:
+        return load_prices(data_dir, since), load_navs(data_dir, since)
+    except FileNotFoundError as e:
+        raise HTTPException(503, "market data not loaded; run app.services.market_data and nav_data") from e
+
+
+def snapshot(p: Portfolio, prices: pd.DataFrame, navs: pd.DataFrame) -> PortfolioSnapshot:
+    try:
+        return value_portfolio(p, prices, navs)
+    except MissingPrice as e:
+        raise HTTPException(503, f"{e}; re-run app.services.market_data and nav_data") from e
+
+
 @router.get("/{portfolio_id}")
 def get_portfolio(portfolio_id: PortfolioId, user: User, store: Store) -> PortfolioSnapshot:
     p = owned(store, user, portfolio_id)
-    data_dir = get_settings().data_dir
-    since = date(date.today().year - 1, 1, 1)  # valuation needs only the last two bars per asset
+    # valuation needs only the last two bars per asset
+    return snapshot(p, *load_market(date.today() - timedelta(days=400)))
+
+
+@router.get("/{portfolio_id}/risk")
+def get_risk(
+    portfolio_id: PortfolioId,
+    user: User,
+    store: Store,
+    confidence: Annotated[float, Query(ge=0.8, le=0.995)] = 0.95,
+    lookback_days: Annotated[int, Query(ge=60, le=1260)] = 252,
+) -> RiskReport:
+    p = owned(store, user, portfolio_id)
+    # ~1.5 calendar days per trading day, plus holidays
+    prices, navs = load_market(date.today() - timedelta(days=int(lookback_days * 1.5) + 30))
+    snap = snapshot(p, prices, navs)
+    weights = pd.Series({h.asset_id: h.weight for h in snap.holdings if h.asset_type is not AssetType.CASH})
+    R = asset_returns(prices, navs)
     try:
-        return value_portfolio(p, load_prices(data_dir, since), load_navs(data_dir, since))
-    except (FileNotFoundError, MissingPrice) as e:
-        raise HTTPException(
-            503, f"market data not loaded; run app.services.market_data and nav_data ({e})"
-        ) from e
+        return risk_report(
+            R,
+            weights,
+            R["^NSEI"],
+            lookback=lookback_days,
+            confidence=confidence,
+            rf=read_config("universe.yaml")["risk_free"]["annual_rate"],
+            cfg=read_config("risk_score.yaml"),
+        )
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
 
 
 @router.put("/{portfolio_id}/holdings")
