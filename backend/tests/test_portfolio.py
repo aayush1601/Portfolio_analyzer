@@ -109,3 +109,30 @@ def test_unknown_or_malformed_id(client):
 def test_missing_market_data_is_503(client, tmp_path):
     pid = client.get("/portfolio").json()[0]["portfolio_id"]  # demo holds RELIANCE etc., not in test prices
     assert client.get(f"/portfolio/{pid}").status_code == 503
+
+
+def test_exposure_and_stress_without_disclosures(client):
+    body = {
+        "name": "x",
+        "holdings": [
+            {"asset_type": "STOCK", "asset_id": "TCS", "quantity": 1},
+            {"asset_type": "MF", "asset_id": "120594", "quantity": 11},  # 110 + 220 = 330 total
+        ],
+    }
+    pid = client.post("/portfolio", json=body).json()["portfolio_id"]
+    e = client.get(f"/portfolio/{pid}/exposure").json()
+    assert e["companies"][0]["symbol"] == "TCS"
+    assert e["unmapped"] == pytest.approx(220 / 330, abs=1e-6)  # fund has no disclosure yet
+    assert "120594" in e["notes"][0]
+
+    r = client.post(f"/portfolio/{pid}/stress", json={"shocks": {"Information Technology": -0.1}})
+    assert r.json()["estimated_loss_inr"] == pytest.approx(-11)
+    assert client.post(f"/portfolio/{pid}/stress", json={"shocks": {"Nope": -0.1}}).status_code == 422
+    assert (
+        client.post(f"/portfolio/{pid}/stress", json={"shocks": {"Information Technology": -5}}).status_code
+        == 422
+    )
+
+
+def test_fund_not_in_universe_is_404(client):
+    assert client.get("/mutual-funds/1").status_code == 404

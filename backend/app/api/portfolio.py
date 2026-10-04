@@ -1,4 +1,4 @@
-"""Portfolio routes (FR2, FR3, FR5): create, list, value, replace holdings, risk.
+"""Portfolio routes (FR2–FR5, FR8): create, list, value, replace holdings, risk, exposure, stress.
 
 Contract: docs/api/openapi.yaml.
 """
@@ -11,11 +11,14 @@ import pandas as pd
 import yaml
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
+from app.analytics.exposure import UNMAPPED, effective_exposure, latest_holdings, stress
 from app.analytics.portfolio import MissingPrice, value_portfolio
 from app.analytics.risk import asset_returns, risk_report
 from app.config import get_settings
+from app.models.exposure import ExposureReport, StressRequest, StressResult
 from app.models.portfolio import AssetType, Holding, Holdings, Portfolio, PortfolioCreate, PortfolioSnapshot
 from app.models.risk import RiskReport
+from app.services.fund_holdings import load_holdings
 from app.services.market_data import load_prices
 from app.services.nav_data import load_navs
 from app.services.portfolio_store import PID_PATTERN, PortfolioStore
@@ -115,7 +118,7 @@ def get_risk(
     weights = pd.Series({h.asset_id: h.weight for h in snap.holdings if h.asset_type is not AssetType.CASH})
     R = asset_returns(prices, navs)
     try:
-        return risk_report(
+        report = risk_report(
             R,
             weights,
             R["^NSEI"],
@@ -126,6 +129,37 @@ def get_risk(
         )
     except ValueError as e:
         raise HTTPException(422, str(e)) from e
+    return report.model_copy(update={"hhi_effective": exposure_for(p, snap).hhi_effective})
+
+
+def stock_sectors() -> dict[str, str]:
+    return {s["symbol"]: s["sector"] for s in read_config("universe.yaml")["stocks"]}
+
+
+def exposure_for(p: Portfolio, snap: PortfolioSnapshot) -> ExposureReport:
+    weights = {t: {h.asset_id: h.weight for h in snap.holdings if h.asset_type is t} for t in AssetType}
+    holdings = latest_holdings(load_holdings(get_settings().data_dir), snap.as_of)
+    return effective_exposure(
+        p.portfolio_id, snap.as_of, weights[AssetType.STOCK], weights[AssetType.MF], holdings, stock_sectors()
+    )
+
+
+@router.get("/{portfolio_id}/exposure")
+def get_exposure(portfolio_id: PortfolioId, user: User, store: Store) -> ExposureReport:
+    p = owned(store, user, portfolio_id)
+    return exposure_for(p, snapshot(p, *load_market(date.today() - timedelta(days=400))))
+
+
+@router.post("/{portfolio_id}/stress")
+def run_stress(portfolio_id: PortfolioId, body: StressRequest, user: User, store: Store) -> StressResult:
+    valid = set(stock_sectors().values()) | {UNMAPPED}
+    if unknown := sorted(set(body.shocks) - valid):
+        raise HTTPException(422, f"unknown sectors {unknown}; valid: {sorted(valid)}")
+    if any(not -1 <= v <= 1 for v in body.shocks.values()):
+        raise HTTPException(422, "shocks are returns between -1 and 1 (e.g. -0.10 for -10%)")
+    p = owned(store, user, portfolio_id)
+    snap = snapshot(p, *load_market(date.today() - timedelta(days=400)))
+    return stress(exposure_for(p, snap), body.shocks, snap.total_value, body.scenario)
 
 
 @router.put("/{portfolio_id}/holdings")

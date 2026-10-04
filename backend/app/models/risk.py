@@ -26,7 +26,8 @@ class RiskReport(BaseModel):
     cvar_1d: float
     beta: float  # vs NIFTY 50 (^NSEI)
     avg_correlation: float | None  # mean pairwise correlation of risky assets; None with one asset
-    hhi_direct: float  # on direct risky weights; look-through hhi_effective arrives in Phase 5
+    hhi_direct: float  # on direct risky weights renormalised to 1 (this one feeds the risk score)
+    hhi_effective: float | None = None  # Σ E_s² over look-through company exposure (Phase 5)
     diversification_ratio: float  # Σ wᵢσᵢ / σₚ ≥ 1
     diversification_score: int
     risk_score: int

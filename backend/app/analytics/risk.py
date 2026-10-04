@@ -47,7 +47,7 @@ def cvar_historical(r: pd.Series, c: float) -> float:
 
 
 def beta(r: pd.Series, market: pd.Series) -> float:
-    both = pd.concat([r, market], axis=1).dropna()
+    both = pd.concat([r, market], axis=1, sort=True).dropna()
     return float(both.cov().iloc[0, 1] / both.iloc[:, 1].var())
 
 

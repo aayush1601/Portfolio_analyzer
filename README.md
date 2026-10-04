@@ -9,6 +9,7 @@ Phase 1 (foundation) done: FastAPI + React skeleton, Docker, tests, RSS news arc
 Phase 2 (market data) done: cleaned daily price panel for the universe + `^NSEI` + `^INDIAVIX` in Parquet.
 Phase 3 (portfolio engine) done: portfolio API with valuation, weights and P/L for stocks, funds and cash.
 Phase 4 (risk engine) done: `GET /portfolio/{id}/risk` with volatility, Sharpe/Sortino, drawdown, VaR ×3, CVaR, beta, HHI, diversification and a 0–100 risk score ([config/risk_score.yaml](config/risk_score.yaml)).
+Phase 5 (funds + look-through) code done: fund analytics, effective exposure, overlap, stress. **Needs AMC holdings files** (below).
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -55,6 +56,16 @@ In code: `load_prices(settings.data_dir)` for PriceBar rows, `returns(prices)` f
 `POST/GET /portfolio`, `GET /portfolio/{id}` (valuation, weights, P/L), `PUT /portfolio/{id}/holdings`; see the API docs at http://localhost:8000/docs.
 Local auth stub: every request is user `local`, stored as JSON in `data/portfolios/local/`. A new user starts with the
 demo portfolios in [config/demo_portfolios.yaml](config/demo_portfolios.yaml). Holdings must be in the research universe.
+
+## Fund holdings and look-through exposure (Phase 5)
+1. Download each AMC's monthly portfolio disclosure (Excel) for the universe funds, 24–36 months back, into
+   `data/raw/mutual_funds/holdings/<amc>/` (file names don't matter).
+2. `cd backend && uv run python -m app.services.fund_holdings` → `data/processed/fund_holdings.parquet`.
+   Sheets are matched to funds by scheme name; a sheet logged as *skipped* under an old fund name needs a
+   `holdings_aliases` entry in `config/universe.yaml`.
+
+Routes: `GET /portfolio/{id}/exposure`, `POST /portfolio/{id}/stress`, `GET /mutual-funds/{scheme_code}`.
+Funds without a disclosure count as *Other/Unmapped* (the response says so) until their files are ingested.
 
 ## Phase 0 feasibility spike
 ```bash

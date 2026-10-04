@@ -393,6 +393,8 @@ mutual_funds:
   category: Large Cap
   plan: Direct
   option: Growth
+  holdings_aliases:  # former name in AMC disclosures (mfapi scheme name: "(erstwhile Bluechip Fund)")
+  - ICICI Prudential Bluechip Fund
 - scheme_code: 119018
   name: HDFC Large Cap Fund
   amc: HDFC
@@ -423,6 +425,8 @@ mutual_funds:
   category: Flexi Cap
   plan: Direct
   option: Growth
+  holdings_aliases:  # former name in AMC disclosures (PPFAS disclosures before the 2021 rename)
+  - Parag Parikh Long Term Equity Fund
 - scheme_code: 118955
   name: HDFC Flexi Cap Fund
   amc: HDFC
