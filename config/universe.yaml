@@ -344,6 +344,8 @@ stocks:
 - symbol: TMPV
   yahoo: TMPV.NS
   isin: INE155A01022
+  # Yahoo's earlier rows are pre-demerger Tata Motors (PV+CV), unadjusted: a fake -40% day on the ex-date.
+  history_start: '2025-10-14'
   name: Tata Motors Passenger Vehicles Ltd.
   sector: Automobile and Auto Components
   aliases:

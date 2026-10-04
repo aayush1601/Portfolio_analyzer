@@ -6,6 +6,7 @@
 
 ## Status
 Phase 1 (foundation) done: FastAPI + React skeleton, Docker, tests, RSS news archiver.
+Phase 2 (market data) done: cleaned daily price panel for the universe + `^NSEI` + `^INDIAVIX` in Parquet.
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -40,6 +41,12 @@ cd frontend && npm run lint && npm run build
 cp scripts/com.portfolio-intelligence.news.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.portfolio-intelligence.news.plist   # every 30 min while awake
 ```
+
+## Market data (Phase 2)
+```bash
+cd backend && uv run python -m app.services.market_data   # after market close; rewrites data/processed/market/prices
+```
+In code: `load_prices(settings.data_dir)` for PriceBar rows, `returns(prices)` for the date × symbol return panel.
 
 ## Phase 0 feasibility spike
 ```bash
