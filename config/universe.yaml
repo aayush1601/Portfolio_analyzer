@@ -1,0 +1,477 @@
+# Research universe. Generated in Phase 0; edit by hand from now on.
+as_of: '2026-10-04'
+sources:
+  stocks: niftyindices.com ind_nifty50list.csv (downloaded 2026-10-04)
+  funds: mfapi.in scheme search (Direct Plan, Growth option)
+benchmark:
+  index: ^NSEI
+  volatility: ^INDIAVIX
+risk_free:
+  proxy: 91-day T-bill yield
+  annual_rate: null
+  note: Fill per year from RBI data before Phase 4
+survivorship_note: Today's NIFTY 50 constituents are used for convenience; this biases backtests upward. Phase 12 must either
+  use point-in-time constituents or report this limitation.
+stocks:
+- symbol: ADANIENT
+  yahoo: ADANIENT.NS
+  isin: INE423A01024
+  name: Adani Enterprises Ltd.
+  sector: Metals & Mining
+  aliases:
+  - Adani Enterprises
+- symbol: ADANIPORTS
+  yahoo: ADANIPORTS.NS
+  isin: INE742F01042
+  name: Adani Ports and Special Economic Zone Ltd.
+  sector: Services
+  aliases:
+  - Adani Ports
+  - Adani Ports and Special Economic Zone
+- symbol: APOLLOHOSP
+  yahoo: APOLLOHOSP.NS
+  isin: INE437A01024
+  name: Apollo Hospitals Enterprise Ltd.
+  sector: Healthcare
+  aliases:
+  - Apollo Hospitals Enterprise
+- symbol: ASIANPAINT
+  yahoo: ASIANPAINT.NS
+  isin: INE021A01026
+  name: Asian Paints Ltd.
+  sector: Consumer Durables
+  aliases:
+  - Asian Paints
+- symbol: AXISBANK
+  yahoo: AXISBANK.NS
+  isin: INE238A01034
+  name: Axis Bank Ltd.
+  sector: Financial Services
+  aliases:
+  - Axis Bank
+- symbol: BSE
+  yahoo: BSE.NS
+  isin: INE118H01025
+  name: BSE Ltd.
+  sector: Financial Services
+  aliases:
+  - BSE
+- symbol: BAJAJ-AUTO
+  yahoo: BAJAJ-AUTO.NS
+  isin: INE917I01010
+  name: Bajaj Auto Ltd.
+  sector: Automobile and Auto Components
+  aliases:
+  - Bajaj Auto
+- symbol: BAJFINANCE
+  yahoo: BAJFINANCE.NS
+  isin: INE296A01032
+  name: Bajaj Finance Ltd.
+  sector: Financial Services
+  aliases:
+  - Bajaj Finance
+- symbol: BAJAJFINSV
+  yahoo: BAJAJFINSV.NS
+  isin: INE918I01026
+  name: Bajaj Finserv Ltd.
+  sector: Financial Services
+  aliases:
+  - Bajaj Finserv
+- symbol: BEL
+  yahoo: BEL.NS
+  isin: INE263A01024
+  name: Bharat Electronics Ltd.
+  sector: Capital Goods
+  aliases:
+  - Bharat Electronics
+- symbol: BHARTIARTL
+  yahoo: BHARTIARTL.NS
+  isin: INE397D01024
+  name: Bharti Airtel Ltd.
+  sector: Telecommunication
+  aliases:
+  - Airtel
+  - Bharti Airtel
+- symbol: CIPLA
+  yahoo: CIPLA.NS
+  isin: INE059A01026
+  name: Cipla Ltd.
+  sector: Healthcare
+  aliases:
+  - Cipla
+- symbol: COALINDIA
+  yahoo: COALINDIA.NS
+  isin: INE522F01014
+  name: Coal India Ltd.
+  sector: Oil Gas & Consumable Fuels
+  aliases:
+  - Coal India
+- symbol: DRREDDY
+  yahoo: DRREDDY.NS
+  isin: INE089A01031
+  name: Dr. Reddy's Laboratories Ltd.
+  sector: Healthcare
+  aliases:
+  - Dr Reddy's
+  - Dr. Reddy's
+  - Dr. Reddy's Laboratories
+- symbol: EICHERMOT
+  yahoo: EICHERMOT.NS
+  isin: INE066A01021
+  name: Eicher Motors Ltd.
+  sector: Automobile and Auto Components
+  aliases:
+  - Eicher Motors
+- symbol: ETERNAL
+  yahoo: ETERNAL.NS
+  isin: INE758T01015
+  name: Eternal Ltd.
+  sector: Consumer Services
+  aliases:
+  - Blinkit
+  - Eternal
+  - Zomato
+- symbol: GRASIM
+  yahoo: GRASIM.NS
+  isin: INE047A01021
+  name: Grasim Industries Ltd.
+  sector: Construction Materials
+  aliases:
+  - Grasim Industries
+- symbol: HCLTECH
+  yahoo: HCLTECH.NS
+  isin: INE860A01027
+  name: HCL Technologies Ltd.
+  sector: Information Technology
+  aliases:
+  - HCL Tech
+  - HCL Technologies
+  - HCLTech
+- symbol: HDFCBANK
+  yahoo: HDFCBANK.NS
+  isin: INE040A01034
+  name: HDFC Bank Ltd.
+  sector: Financial Services
+  aliases:
+  - HDFC Bank
+- symbol: HDFCLIFE
+  yahoo: HDFCLIFE.NS
+  isin: INE795G01014
+  name: HDFC Life Insurance Company Ltd.
+  sector: Financial Services
+  aliases:
+  - HDFC Life Insurance Company
+- symbol: HINDALCO
+  yahoo: HINDALCO.NS
+  isin: INE038A01020
+  name: Hindalco Industries Ltd.
+  sector: Metals & Mining
+  aliases:
+  - Hindalco Industries
+- symbol: HINDUNILVR
+  yahoo: HINDUNILVR.NS
+  isin: INE030A01027
+  name: Hindustan Unilever Ltd.
+  sector: Fast Moving Consumer Goods
+  aliases:
+  - HUL
+  - Hindustan Unilever
+- symbol: ICICIBANK
+  yahoo: ICICIBANK.NS
+  isin: INE090A01021
+  name: ICICI Bank Ltd.
+  sector: Financial Services
+  aliases:
+  - ICICI Bank
+- symbol: ITC
+  yahoo: ITC.NS
+  isin: INE154A01025
+  name: ITC Ltd.
+  sector: Fast Moving Consumer Goods
+  aliases:
+  - ITC
+- symbol: INFY
+  yahoo: INFY.NS
+  isin: INE009A01021
+  name: Infosys Ltd.
+  sector: Information Technology
+  aliases:
+  - Infosys
+- symbol: INDIGO
+  yahoo: INDIGO.NS
+  isin: INE646L01027
+  name: InterGlobe Aviation Ltd.
+  sector: Services
+  aliases:
+  - IndiGo
+  - InterGlobe Aviation
+- symbol: JSWSTEEL
+  yahoo: JSWSTEEL.NS
+  isin: INE019A01038
+  name: JSW Steel Ltd.
+  sector: Metals & Mining
+  aliases:
+  - JSW Steel
+- symbol: JIOFIN
+  yahoo: JIOFIN.NS
+  isin: INE758E01017
+  name: Jio Financial Services Ltd.
+  sector: Financial Services
+  aliases:
+  - Jio Financial Services
+- symbol: KOTAKBANK
+  yahoo: KOTAKBANK.NS
+  isin: INE237A01036
+  name: Kotak Mahindra Bank Ltd.
+  sector: Financial Services
+  aliases:
+  - Kotak Bank
+  - Kotak Mahindra Bank
+- symbol: LT
+  yahoo: LT.NS
+  isin: INE018A01030
+  name: Larsen & Toubro Ltd.
+  sector: Construction
+  aliases:
+  - L&T
+  - Larsen
+  - Larsen & Toubro
+- symbol: M&M
+  yahoo: M&M.NS
+  isin: INE101A01026
+  name: Mahindra & Mahindra Ltd.
+  sector: Automobile and Auto Components
+  aliases:
+  - M&M
+  - Mahindra & Mahindra
+- symbol: MARUTI
+  yahoo: MARUTI.NS
+  isin: INE585B01010
+  name: Maruti Suzuki India Ltd.
+  sector: Automobile and Auto Components
+  aliases:
+  - Maruti Suzuki India
+- symbol: MAXHEALTH
+  yahoo: MAXHEALTH.NS
+  isin: INE027H01010
+  name: Max Healthcare Institute Ltd.
+  sector: Healthcare
+  aliases:
+  - Max Healthcare Institute
+- symbol: NTPC
+  yahoo: NTPC.NS
+  isin: INE733E01010
+  name: NTPC Ltd.
+  sector: Power
+  aliases:
+  - NTPC
+- symbol: NESTLEIND
+  yahoo: NESTLEIND.NS
+  isin: INE239A01024
+  name: Nestle India Ltd.
+  sector: Fast Moving Consumer Goods
+  aliases:
+  - Nestle India
+- symbol: ONGC
+  yahoo: ONGC.NS
+  isin: INE213A01029
+  name: Oil & Natural Gas Corporation Ltd.
+  sector: Oil Gas & Consumable Fuels
+  aliases:
+  - ONGC
+  - Oil & Natural Gas Corporation
+- symbol: POWERGRID
+  yahoo: POWERGRID.NS
+  isin: INE752E01010
+  name: Power Grid Corporation of India Ltd.
+  sector: Power
+  aliases:
+  - Power Grid
+  - Power Grid Corporation of India
+- symbol: RELIANCE
+  yahoo: RELIANCE.NS
+  isin: INE002A01018
+  name: Reliance Industries Ltd.
+  sector: Oil Gas & Consumable Fuels
+  aliases:
+  - RIL
+  - Reliance Industries
+- symbol: SBILIFE
+  yahoo: SBILIFE.NS
+  isin: INE123W01016
+  name: SBI Life Insurance Company Ltd.
+  sector: Financial Services
+  aliases:
+  - SBI Life Insurance Company
+- symbol: SHRIRAMFIN
+  yahoo: SHRIRAMFIN.NS
+  isin: INE721A01047
+  name: Shriram Finance Ltd.
+  sector: Financial Services
+  aliases:
+  - Shriram Finance
+- symbol: SBIN
+  yahoo: SBIN.NS
+  isin: INE062A01020
+  name: State Bank of India
+  sector: Financial Services
+  aliases:
+  - SBI
+  - State Bank
+  - State Bank of India
+- symbol: SUNPHARMA
+  yahoo: SUNPHARMA.NS
+  isin: INE044A01036
+  name: Sun Pharmaceutical Industries Ltd.
+  sector: Healthcare
+  aliases:
+  - Sun Pharmaceutical Industries
+- symbol: TCS
+  yahoo: TCS.NS
+  isin: INE467B01029
+  name: Tata Consultancy Services Ltd.
+  sector: Information Technology
+  aliases:
+  - TCS
+  - Tata Consultancy Services
+- symbol: TATACONSUM
+  yahoo: TATACONSUM.NS
+  isin: INE192A01025
+  name: Tata Consumer Products Ltd.
+  sector: Fast Moving Consumer Goods
+  aliases:
+  - Tata Consumer Products
+- symbol: TMPV
+  yahoo: TMPV.NS
+  isin: INE155A01022
+  name: Tata Motors Passenger Vehicles Ltd.
+  sector: Automobile and Auto Components
+  aliases:
+  - Tata Motors
+  - Tata Motors Passenger Vehicles
+- symbol: TATASTEEL
+  yahoo: TATASTEEL.NS
+  isin: INE081A01020
+  name: Tata Steel Ltd.
+  sector: Metals & Mining
+  aliases:
+  - Tata Steel
+- symbol: TECHM
+  yahoo: TECHM.NS
+  isin: INE669C01036
+  name: Tech Mahindra Ltd.
+  sector: Information Technology
+  aliases:
+  - Tech Mahindra
+- symbol: TITAN
+  yahoo: TITAN.NS
+  isin: INE280A01028
+  name: Titan Company Ltd.
+  sector: Consumer Durables
+  aliases:
+  - Titan Company
+- symbol: TRENT
+  yahoo: TRENT.NS
+  isin: INE849A01020
+  name: Trent Ltd.
+  sector: Consumer Services
+  aliases:
+  - Trent
+- symbol: ULTRACEMCO
+  yahoo: ULTRACEMCO.NS
+  isin: INE481G01011
+  name: UltraTech Cement Ltd.
+  sector: Construction Materials
+  aliases:
+  - UltraTech Cement
+mutual_funds:
+- scheme_code: 120586
+  name: ICICI Prudential Large Cap Fund
+  amc: ICICI Prudential
+  category: Large Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 119018
+  name: HDFC Large Cap Fund
+  amc: HDFC
+  category: Large Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 119598
+  name: SBI Large Cap Fund
+  amc: SBI
+  category: Large Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 120465
+  name: Axis Large Cap Fund
+  amc: Axis
+  category: Large Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 120152
+  name: Kotak Large Cap Fund
+  amc: Kotak
+  category: Large Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 122639
+  name: Parag Parikh Flexi Cap Fund
+  amc: PPFAS
+  category: Flexi Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 118955
+  name: HDFC Flexi Cap Fund
+  amc: HDFC
+  category: Flexi Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 119718
+  name: SBI Flexicap Fund
+  amc: SBI
+  category: Flexi Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 118989
+  name: HDFC Mid Cap Fund
+  amc: HDFC
+  category: Mid Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 120505
+  name: Axis Midcap Fund
+  amc: Axis
+  category: Mid Cap
+  plan: Direct
+  option: Growth
+- scheme_code: 119063
+  name: HDFC Nifty 50 Index Fund
+  amc: HDFC
+  category: Index
+  plan: Direct
+  option: Growth
+- scheme_code: 120594
+  name: ICICI Prudential Technology Fund
+  amc: ICICI Prudential
+  category: Sectoral - IT
+  plan: Direct
+  option: Growth
+- scheme_code: 133859
+  name: SBI Banking & Financial Services Fund
+  amc: SBI
+  category: Sectoral - Banking/FS
+  plan: Direct
+  option: Growth
+- scheme_code: 120503
+  name: Axis ELSS Tax Saver Fund
+  amc: Axis
+  category: ELSS
+  plan: Direct
+  option: Growth
+- scheme_code: 119773
+  name: Kotak ELSS Tax Saver Fund
+  amc: Kotak
+  category: ELSS
+  plan: Direct
+  option: Growth

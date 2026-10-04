@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Portfolio Intelligence API
+  version: 0.1.0
+  description: |
+    Draft contract (Phase 0). Weights are fractions, money is INR, timestamps are ISO-8601 UTC.
+    All /portfolio*, /backtest* routes require `Authorization: Bearer <Cognito JWT>`; the user is taken
+    from the token's `sub`, never from the request. Academic decision-support output, not financial advice.
+servers:
+  - url: http://localhost:8000
+    description: Local FastAPI
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Liveness (FR-none, ops)
+      security: []
+      responses:
+        "200": { description: OK, content: { application/json: { example: { status: ok, version: 0.1.0 } } } }
+
+  /portfolio:
+    post:
+      summary: Create a portfolio with holdings (FR2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PortfolioCreate" }
+            example:
+              name: Main
+              holdings:
+                - { asset_type: STOCK, asset_id: TCS, quantity: 10, avg_cost: 3650.5 }
+                - { asset_type: MF, asset_id: "120594", quantity: 412.3, avg_cost: 180.2 }
+                - { asset_type: CASH, asset_id: INR, quantity: 25000 }
+      responses:
+        "201": { description: Created, content: { application/json: { example: { portfolio_id: p01 } } } }
+        "422": { $ref: "#/components/responses/Error" }
+    get:
+      summary: List my portfolios (FR2)
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { example: [ { portfolio_id: p01, name: Main, created_at: "2026-10-04T10:00:00Z" } ] } }
+
+  /portfolio/{id}:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    get:
+      summary: Valuation, weights, P/L (FR3)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                portfolio_id: p01
+                as_of: "2026-10-03"
+                total_value: 412345.67
+                daily_pl: -1834.2
+                total_pl: 38120.4
+                holdings:
+                  - { asset_type: STOCK, asset_id: TCS, quantity: 10, price: 3712.0, value: 37120.0, weight: 0.09, pl: 615.0 }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /portfolio/{id}/holdings:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    put:
+      summary: Replace holdings (FR2)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Holding" } } } }
+      responses:
+        "200": { description: Updated }
+
+  /portfolio/{id}/exposure:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    get:
+      summary: Direct vs effective (look-through) exposure and fund overlap (FR4)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                portfolio_id: p01
+                as_of: "2026-10-03"
+                holdings_as_of: { "120594": "2026-08", "119018": "2026-08" }
+                companies:
+                  - symbol: TCS
+                    direct: 0.200
+                    indirect: 0.032
+                    effective: 0.232
+                    via: [ { fund: "120594", contribution: 0.024 }, { fund: "119018", contribution: 0.008 } ]
+                sectors: [ { sector: Information Technology, direct: 0.20, effective: 0.26 } ]
+                overlap: [ { fund_a: "120594", fund_b: "119018", overlap: 0.09 } ]
+                hhi_effective: 0.071
+
+  /portfolio/{id}/risk:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    get:
+      summary: Risk metrics and 0-100 risk score (FR5)
+      parameters:
+        - { name: confidence, in: query, schema: { type: number, default: 0.95 } }
+        - { name: lookback_days, in: query, schema: { type: integer, default: 252 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                as_of: "2026-10-03"
+                volatility_ann: 0.164
+                sharpe: 0.82
+                sortino: 1.12
+                max_drawdown: -0.187
+                var_1d: { historical: 0.021, parametric: 0.019, monte_carlo: 0.020 }
+                cvar_1d: 0.029
+                beta: 0.93
+                hhi_effective: 0.071
+                diversification_score: 64
+                risk_score: 47
+                risk_band: Moderate
+                score_weights_version: v1
+
+  /portfolio/{id}/stress:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    post:
+      summary: Run a stress scenario through effective exposure (FR8)
+      requestBody:
+        content:
+          application/json:
+            example: { scenario: custom, shocks: { "Information Technology": -0.10, "Financial Services": -0.15 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example: { estimated_loss: -0.041, estimated_loss_inr: -16906.2, new_risk_score: 55, top_contributors: [ { symbol: TCS, loss: -0.0232 } ] }
+
+  /portfolio/{id}/news:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    get:
+      summary: News relevant to the portfolio, with exposure-weighted impact (FR6)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                portfolio_news_impact: -0.034
+                items:
+                  - news_id: 9f3c
+                    headline: "..."
+                    source: economictimes.indiatimes.com
+                    published_at: "2026-10-02T08:00:00Z"
+                    symbols: [ TCS ]
+                    sectors: [ Information Technology ]
+                    sentiment: { label: negative, score: -0.62, confidence: 0.81 }
+                    importance: 0.7
+                    effective_exposure: 0.232
+                    impact: -0.11
+
+  /portfolio/{id}/recommendations:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    get:
+      summary: Explainable actions (FR7)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                as_of: "2026-10-03"
+                disclaimer: Hypothetical, for research; not financial advice.
+                items:
+                  - asset_id: TCS
+                    asset_type: STOCK
+                    action: REDUCE
+                    final_score: 31
+                    components: { expected_return: 42, news: 18, risk: 30, portfolio_fit: 25 }
+                    reasons:
+                      - Negative recent sentiment (-0.62)
+                      - Effective exposure 23.2% exceeds 15% single-company cap
+                      - IT sector effective exposure 26% above 20% target
+                    constraints_triggered: [ max_company_exposure ]
+                    shap_top: [ { feature: sentiment_7d, value: -0.012 }, { feature: momentum_20d, value: 0.004 } ]
+
+  /stocks/{symbol}:
+    get:
+      summary: Stock analytics
+      parameters: [ { name: symbol, in: path, required: true, schema: { type: string } } ]
+      responses: { "200": { description: OK } }
+
+  /mutual-funds/{scheme_code}:
+    get:
+      summary: Fund analytics, metadata, holdings, sector mix (FR11)
+      parameters: [ { name: scheme_code, in: path, required: true, schema: { type: string } } ]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                scheme_code: "120594"
+                name: ICICI Prudential Technology Fund - Direct Plan - Growth
+                nav: 210.45
+                returns: { "1d": 0.004, "1m": -0.021, "3m": 0.03, "6m": 0.08, cagr_1y: 0.12, cagr_3y: 0.15, cagr_5y: 0.21 }
+                risk: { volatility_ann: 0.21, sharpe: 0.6, max_drawdown: -0.31, var_1d: 0.027, beta: 1.05 }
+                expense_ratio: 0.0098
+                top_holdings: [ { symbol: INFY, weight: 0.21 }, { symbol: TCS, weight: 0.081 } ]
+                holdings_as_of: "2026-08"
+
+  /backtest:
+    post:
+      summary: Start a backtest (async) (FR9)
+      requestBody:
+        content:
+          application/json:
+            example: { strategy: news_aware_mv, start: "2025-01-01", end: "2025-12-31", rebalance: monthly, cost_bps: 10 }
+      responses:
+        "202": { description: Accepted, content: { application/json: { example: { run_id: bt_01, status: QUEUED } } } }
+
+  /backtest/{run_id}:
+    get:
+      summary: Backtest status and results (FR9)
+      parameters: [ { name: run_id, in: path, required: true, schema: { type: string } } ]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example: { run_id: bt_01, status: DONE, metrics: { cagr: 0.11, volatility: 0.15, sharpe: 0.9, sortino: 1.2, max_drawdown: -0.14, calmar: 0.79, turnover: 1.8 } }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    PortfolioId: { name: id, in: path, required: true, schema: { type: string } }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: object, properties: { code: { type: string }, message: { type: string } } }
+          example: { error: { code: VALIDATION_ERROR, message: quantity must be > 0 } }
+  schemas:
+    Holding:
+      type: object
+      required: [ asset_type, asset_id, quantity ]
+      properties:
+        asset_type: { type: string, enum: [ STOCK, MF, CASH ] }
+        asset_id: { type: string, description: "NSE symbol, AMFI scheme code, or INR" }
+        quantity: { type: number, exclusiveMinimum: true, minimum: 0 }
+        avg_cost: { type: number, minimum: 0 }
+    PortfolioCreate:
+      type: object
+      required: [ name, holdings ]
+      properties:
+        name: { type: string, maxLength: 100 }
+        holdings: { type: array, items: { $ref: "#/components/schemas/Holding" } }
