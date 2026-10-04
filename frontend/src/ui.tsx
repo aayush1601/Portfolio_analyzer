@@ -135,7 +135,7 @@ export function Status<T>({ q, what, children }: { q: Loadable<T>; what: string;
   if (!q.data)
     return (
       <div className="border-t-2 border-rule bg-panel px-6 py-10 text-ink-3" aria-busy="true">
-        <span className="animate-pulse">Loading {what}…</span>
+        <span>Loading {what}…</span>
       </div>
     )
   return <>{children(q.data)}</>

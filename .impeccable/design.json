@@ -1,0 +1,454 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T17:35:23+00:00",
+  "title": "Design System: Portfolio Intelligence",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Newsprint",
+        "canonical": "#f3f4f0",
+        "tonalRamp": [
+          "#292c20",
+          "#454a36",
+          "#60674c",
+          "#7c8461",
+          "#9ca483",
+          "#bdc3ad",
+          "#dcdfd3",
+          "#f3f4f0"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#737373",
+          "#949494",
+          "#b8b8b8",
+          "#d9d9d9",
+          "#f2f2f2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#18222d",
+        "tonalRamp": [
+          "#1b2632",
+          "#2c3f53",
+          "#3e5874",
+          "#507196",
+          "#7392b4",
+          "#a2b7cd",
+          "#cdd8e4",
+          "#eef2f6"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#4a5663",
+        "tonalRamp": [
+          "#21262c",
+          "#373f49",
+          "#4c5966",
+          "#627283",
+          "#8493a3",
+          "#adb7c2",
+          "#d3d9de",
+          "#f0f2f4"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#66707c",
+        "tonalRamp": [
+          "#23262a",
+          "#3a3f46",
+          "#515862",
+          "#68727e",
+          "#89939e",
+          "#b1b7bf",
+          "#d5d8dc",
+          "#f1f2f3"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#d6dad3",
+        "tonalRamp": [
+          "#262a23",
+          "#3f453a",
+          "#586152",
+          "#717d69",
+          "#939d8b",
+          "#b7beb1",
+          "#d8dcd5",
+          "#f2f3f1"
+        ]
+      },
+      "rule-soft": {
+        "role": "neutral",
+        "displayName": "Rule Soft",
+        "canonical": "#e8eae5",
+        "tonalRamp": [
+          "#272a22",
+          "#414739",
+          "#5b6350",
+          "#757f67",
+          "#969f89",
+          "#b9bfb0",
+          "#daddd5",
+          "#f3f4f1"
+        ]
+      },
+      "bar": {
+        "role": "primary",
+        "displayName": "Masthead Navy",
+        "canonical": "#163a5f",
+        "tonalRamp": [
+          "#0e263e",
+          "#183f68",
+          "#225891",
+          "#2b72ba",
+          "#5193d7",
+          "#8bb7e4",
+          "#c1d8f1",
+          "#eaf2fa"
+        ]
+      },
+      "bar-ink": {
+        "role": "primary",
+        "displayName": "Masthead Ink",
+        "canonical": "#e9eef4",
+        "tonalRamp": [
+          "#192533",
+          "#2a3e55",
+          "#3b5777",
+          "#4c6f99",
+          "#7091b8",
+          "#a0b5cf",
+          "#ccd8e6",
+          "#eef2f6"
+        ]
+      },
+      "bar-ink-2": {
+        "role": "primary",
+        "displayName": "Masthead Ink Muted",
+        "canonical": "#b3c2d3",
+        "tonalRamp": [
+          "#1c2630",
+          "#2f3f51",
+          "#415871",
+          "#547191",
+          "#7792b0",
+          "#a5b6cb",
+          "#cfd8e3",
+          "#eff2f6"
+        ]
+      },
+      "direct": {
+        "role": "primary",
+        "displayName": "Direct Navy",
+        "canonical": "#1f4e79",
+        "tonalRamp": [
+          "#10273d",
+          "#1a4165",
+          "#245c8e",
+          "#2f76b7",
+          "#5497d3",
+          "#8db9e2",
+          "#c2daef",
+          "#ebf3fa"
+        ]
+      },
+      "direct-soft": {
+        "role": "primary",
+        "displayName": "Direct Navy Wash",
+        "canonical": "#dbe5ef",
+        "tonalRamp": [
+          "#182635",
+          "#274058",
+          "#37597c",
+          "#47739f",
+          "#6b94bd",
+          "#9cb8d3",
+          "#cad9e7",
+          "#edf2f7"
+        ]
+      },
+      "via": {
+        "role": "secondary",
+        "displayName": "Fund Ochre",
+        "canonical": "#b8770c",
+        "tonalRamp": [
+          "#482e05",
+          "#784d08",
+          "#a86c0b",
+          "#d78b0e",
+          "#f2ab36",
+          "#f6c779",
+          "#fae1b7",
+          "#fdf5e7"
+        ]
+      },
+      "via-soft": {
+        "role": "secondary",
+        "displayName": "Fund Ochre Wash",
+        "canonical": "#f6ead2",
+        "tonalRamp": [
+          "#402f0d",
+          "#6a4e15",
+          "#956d1e",
+          "#bf8c26",
+          "#dbac4c",
+          "#e7c788",
+          "#f2e1bf",
+          "#fbf5ea"
+        ]
+      },
+      "alert": {
+        "role": "tertiary",
+        "displayName": "Vermilion",
+        "canonical": "#b3261e",
+        "tonalRamp": [
+          "#420e0b",
+          "#6d1712",
+          "#99201a",
+          "#c52a21",
+          "#e05048",
+          "#eb8a85",
+          "#f4c0bd",
+          "#fbeae9"
+        ]
+      },
+      "alert-soft": {
+        "role": "tertiary",
+        "displayName": "Vermilion Wash",
+        "canonical": "#f8e3e1",
+        "tonalRamp": [
+          "#3e130e",
+          "#671f18",
+          "#912b22",
+          "#ba382b",
+          "#d65d51",
+          "#e4938b",
+          "#f1c5c1",
+          "#faecea"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Sentence Headline",
+        "purpose": "Figure titles that state the finding; 1.25rem below 640px, balanced wrap, max 60ch."
+      },
+      "title": {
+        "displayName": "Masthead Title",
+        "purpose": "Product name on the navy bar."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Deks, table cells (0.9rem), explanatory copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Strip labels, axis ticks, table headers, source lines (0.75-0.8rem)."
+      },
+      "figure": {
+        "displayName": "Headline Figure",
+        "purpose": "Key numbers in the figures strip."
+      },
+      "number": {
+        "displayName": "Tabular Number",
+        "purpose": "Every number in tables, charts, plates and annotations."
+      }
+    },
+    "patterns": [
+      {
+        "name": "hatch-via",
+        "value": "repeating-linear-gradient(135deg, var(--color-via) 0 2px, var(--color-via-soft) 2px 5px)",
+        "purpose": "Exposure added through funds; paired with a 1px via outline."
+      },
+      {
+        "name": "hatch-unmapped",
+        "value": "repeating-linear-gradient(135deg, var(--color-ink-3) 0 1px, var(--color-rule-soft) 1px 6px)",
+        "purpose": "Held but not yet visible (fund holdings not loaded)."
+      },
+      {
+        "name": "hatch-tail",
+        "value": "SVG pattern, 45deg, 0.6 alert stroke over alert-soft",
+        "purpose": "Risk histogram bins beyond VaR."
+      }
+    ],
+    "shadows": [],
+    "motion": [
+      {
+        "name": "draw-x",
+        "value": "scaleX(0) -> 1, 700ms cubic-bezier(0.16, 1, 0.3, 1), origin left; stagger 40ms per row, fund segment +200ms",
+        "purpose": "The single authored moment: chart marks draw from their zero line when data lands."
+      },
+      {
+        "name": "color-transition",
+        "value": "Tailwind transition-colors default",
+        "purpose": "Hover states on buttons, tabs, inputs."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all animation and transition durations 1ms",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "max-content",
+        "value": "1440px"
+      }
+    ],
+    "print": "White ground; tabs and New-portfolio control hidden (.no-print); hatch, sign and glyph carry every encoding in greyscale."
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Masthead-navy action button; hovers to direct navy.",
+      "html": "<button class=\"ds-btn-primary\">Save holdings</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:6px;background:#163a5f;color:#e9eef4;border:0;border-radius:3px;padding:6px 12px;font:600 0.875rem/1.25 'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;transition:background .15s}.ds-btn-primary:hover{background:#1f4e79}.ds-btn-primary:focus-visible{outline:2px solid #1f4e79;outline-offset:2px}.ds-btn-primary:disabled{background:#66707c;cursor:not-allowed}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Default secondary button: white with a rule border.",
+      "html": "<button class=\"ds-btn-quiet\"><svg viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.8h-2.8\"/></svg> Try again</button>",
+      "css": ".ds-btn-quiet{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#18222d;border:1px solid #d6dad3;border-radius:3px;padding:6px 12px;font:600 0.875rem/1.25 'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;transition:border-color .15s}.ds-btn-quiet:hover{border-color:#66707c}.ds-btn-quiet:focus-visible{outline:2px solid #1f4e79;outline-offset:2px}"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Form field: rule border, focus shifts border to direct navy.",
+      "html": "<input class=\"ds-input\" value=\"10000\" aria-label=\"Quantity\">",
+      "css": ".ds-input{background:#fff;color:#18222d;border:1px solid #d6dad3;border-radius:3px;padding:6px 8px;font:400 0.9rem/1.4 'Atkinson Hyperlegible Mono',ui-monospace,monospace;caret-color:#1f4e79}.ds-input:hover{border-color:#66707c}.ds-input:focus{border-color:#1f4e79;outline:none}"
+    },
+    {
+      "name": "Masthead Tabs",
+      "kind": "nav",
+      "refersTo": "top-bar",
+      "description": "Navy masthead with underlined active tab.",
+      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab\" aria-current=\"page\" href=\"#\">Look-through</a><a class=\"ds-tab\" href=\"#\">Holdings</a><a class=\"ds-tab\" href=\"#\">Risk</a><a class=\"ds-tab\" href=\"#\">News</a><a class=\"ds-tab\" href=\"#\">Actions</a></nav>",
+      "css": ".ds-tabs{display:flex;background:#163a5f;padding:8px 12px 0;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif}.ds-tab{display:block;padding:8px 12px;font-size:0.95rem;color:#b3c2d3;text-decoration:none;border-bottom:3px solid transparent;transition:color .15s}.ds-tab:hover{color:#e9eef4}.ds-tab[aria-current=page]{color:#e9eef4;font-weight:600;border-bottom-color:#e9eef4}.ds-tab:focus-visible{outline:2px solid #e9eef4;outline-offset:-2px}"
+    },
+    {
+      "name": "Figure",
+      "kind": "card",
+      "refersTo": "figure",
+      "description": "The unit of every screen: ink top rule, sentence headline, dek, graphic, source line.",
+      "html": "<section class=\"ds-figure\"><div class=\"ds-figure-head\"><h2>30% of this portfolio sits inside funds we can’t see into yet.</h2><p>Look-through needs each fund’s monthly holdings disclosure.</p></div><div class=\"ds-figure-body\">…</div><p class=\"ds-figure-source\">Prices to 1 Oct 2026; fund holdings: no disclosures loaded yet.</p></section>",
+      "css": ".ds-figure{background:#fff;border-top:2px solid #18222d;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;color:#18222d}.ds-figure-head{padding:16px 24px 0;max-width:60ch}.ds-figure-head h2{margin:0;font-size:1.4rem;font-weight:700;line-height:1.375;letter-spacing:-0.01em;text-wrap:balance}.ds-figure-head p{margin:4px 0 0;color:#4a5663}.ds-figure-body{padding:16px 24px}.ds-figure-source{margin:0;border-top:1px solid #e8eae5;padding:8px 24px;font-size:0.8rem;color:#66707c}"
+    },
+    {
+      "name": "Dumbbell Row",
+      "kind": "custom",
+      "description": "Direct navy bar to dot, ochre hatch to the effective ring, dashed cap line, breach in vermilion with alert triangle.",
+      "html": "<div class=\"ds-db\"><span class=\"ds-db-plate\"><b>HDFCBANK</b> <span>· 22.6%</span></span><div class=\"ds-db-track\"><i class=\"ds-db-direct\" style=\"width:55%\"></i><i class=\"ds-db-via\" style=\"left:55%;width:15%\"></i><i class=\"ds-db-dot\" style=\"left:55%\"></i><i class=\"ds-db-ring\" style=\"left:70%\"></i><i class=\"ds-db-cap\" style=\"left:50%\"></i></div><span class=\"ds-db-val\"><svg viewBox=\"0 0 16 16\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 2.2 14.5 13.5h-13z\"/><path d=\"M8 6.5v3.2M8 11.6v.1\"/></svg>22.6%</span></div>",
+      "css": ".ds-db{display:grid;grid-template-columns:9rem 1fr 6rem;gap:12px;align-items:center;font-family:'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;font-size:0.9rem;color:#18222d}.ds-db-plate span{font-family:'Atkinson Hyperlegible Mono',monospace;font-size:0.85em;color:#4a5663}.ds-db-track{position:relative;height:20px;border-left:1px solid #66707c}.ds-db-track i{position:absolute;display:block}.ds-db-direct{left:0;top:6px;bottom:6px;background:#1f4e79;transform-origin:left;animation:ds-grow 700ms cubic-bezier(0.16,1,0.3,1) both}.ds-db-via{top:3px;bottom:3px;outline:1px solid #b8770c;background-image:repeating-linear-gradient(135deg,#b8770c 0 2px,#f6ead2 2px 5px);transform-origin:left;animation:ds-grow 700ms 200ms cubic-bezier(0.16,1,0.3,1) both}.ds-db-dot{top:50%;width:12px;height:12px;border-radius:50%;background:#1f4e79;box-shadow:0 0 0 2px #fff;transform:translate(-50%,-50%)}.ds-db-ring{top:50%;width:14px;height:14px;border-radius:50%;border:2px solid #1f4e79;background:#fff;box-sizing:border-box;transform:translate(-50%,-50%)}.ds-db-cap{top:-4px;bottom:-4px;border-left:1px dashed #4a5663}.ds-db-val{text-align:right;font-family:'Atkinson Hyperlegible Mono',monospace;font-weight:600;color:#b3261e;display:inline-flex;gap:4px;justify-content:flex-end;align-items:center}@keyframes ds-grow{from{transform:scaleX(0)}}@media (prefers-reduced-motion:reduce){.ds-db i{animation-duration:1ms}}"
+    },
+    {
+      "name": "Action Stamp",
+      "kind": "chip",
+      "refersTo": "stamp-add",
+      "description": "Recommendation stamp; a cap-overridden call stays visible, struck through, before the new stamp.",
+      "html": "<span class=\"ds-struck\">BUY</span> <span class=\"ds-stamp ds-stamp-hold\">HOLD</span> <span class=\"ds-stamp ds-stamp-add\">INCREASE</span> <span class=\"ds-stamp\">REDUCE</span>",
+      "css": ".ds-stamp{display:inline-block;border:2px solid #18222d;border-radius:2px;padding:2px 8px;font:700 0.8rem/1.4 'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;letter-spacing:0.06em;color:#18222d;background:#fff}.ds-stamp-add{background:#1f4e79;border-color:#1f4e79;color:#fff}.ds-stamp-hold{border-color:#66707c;color:#4a5663}.ds-struck{font:700 0.8rem/1.4 'Atkinson Hyperlegible Next Variable',system-ui,sans-serif;letter-spacing:0.06em;color:#4a5663;text-decoration:line-through;text-decoration-thickness:2px}"
+    },
+    {
+      "name": "Delta",
+      "kind": "custom",
+      "description": "Signed mono figure with drawn triangle; never coloured.",
+      "html": "<span class=\"ds-delta\"><svg viewBox=\"0 0 16 16\" width=\"10\" height=\"10\"><path d=\"M8 12.5 3 5h10z\" fill=\"currentColor\"/></svg><b>−₹65,901</b></span>",
+      "css": ".ds-delta{display:inline-flex;align-items:center;gap:4px;font-family:'Atkinson Hyperlegible Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:-0.01em;font-size:1.05rem;color:#18222d;white-space:nowrap}.ds-delta svg{color:#4a5663}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Chart Desk",
+    "overview": "**Creative North Star: \"The Chart Desk\"**\n\nA newspaper data-graphics desk run as a working app. Every screen leads with a chart whose headline states its finding as a full sentence, followed by a one-paragraph dek, the graphic, and a small source line ruled off beneath. The ground is a cool newsprint white, panels are plain white, and a single deep-navy bar carries the product name, portfolio select, tabs and the data-as-of stamp. Light by design: the app is projected in lit rooms and printed into reports, often in greyscale.\n\nDensity is that of a well-set business page: ruled, sortable tables and compact horizontal-bar graphics, generous line height, no decoration that does not encode data. Colour is a legend, not a mood: navy means held directly, ochre hatching means held through funds, grey hatching means not yet visible, and vermilion appears only when something crosses a limit. Every encoding also survives without colour, through hatch, sign, glyph or position.\n\nThe system refuses the KPI-card-and-donut admin dashboard, the trading terminal, and the dark \"fintech\" look.",
+    "keyCharacteristics": [
+      "Sentence headlines that state the finding, balanced across lines, max 60ch.",
+      "Figures open with a 2px ink rule on top; no cards, no shadows, no radius.",
+      "Navy / ochre-hatch / grey-hatch / vermilion as a fixed data legend across every chart.",
+      "Tabular monospace figures with true minus signs and Indian digit grouping.",
+      "One company, one name plate (symbol · sector · effective %), identical everywhere.",
+      "One authored motion: chart marks draw out from their zero line."
+    ],
+    "rules": [
+      {
+        "name": "The Legend Rule",
+        "body": "Navy = held directly. Ochre hatch = added through funds. Grey hatch (1px ink-3 over rule-soft, 135°) = held but not yet visible. These meanings are fixed across every chart; never reuse a data colour for chrome or emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Vermilion Owns Alerts Rule",
+        "body": "Vermilion appears only where a limit is crossed or something failed: cap breaches, the news alert, errors, the risk tail. A loss is not an alert; losses carry a minus sign and a down triangle in ink, never red.",
+        "section": "colors"
+      },
+      {
+        "name": "The Greyscale Rule",
+        "body": "Every encoding must survive greyscale print: fund exposure is hatched, not just ochre; unmapped exposure is a differently pitched grey hatch; gains and losses carry a sign and a drawn triangle; breaches carry the alert triangle.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Figure Rule",
+        "body": "Every number is set in the mono with tabular figures, true minus (−), Indian grouping for rupees, and \"pts\" for percentage-point differences.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Headline Rule",
+        "body": "A figure's title is a full sentence carrying the finding and its number (\"30% of this portfolio sits inside funds we can't see into yet.\"), never a label like \"Exposure\".",
+        "section": "typography"
+      },
+      {
+        "name": "The Rule-Not-Shadow Rule",
+        "body": "Separate with rules (2px ink to open a figure, 1px rule between sections, rule-soft between rows), never with shadows or floating cards.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** open every figure with a 2px Ink rule and a sentence headline that states the finding with its number.",
+      "**Do** end every figure with a source line naming the data, model or rules version behind it.",
+      "**Do** hatch fund exposure (ochre) and not-yet-visible exposure (grey) so they survive greyscale.",
+      "**Do** set every number in Atkinson Hyperlegible Mono with tabular figures and a true minus.",
+      "**Do** keep one name plate per company, identical in every view.",
+      "**Do** keep a blocked action visible, struck through, next to the stamp and the cap that overrode it.",
+      "**Do** show the disclaimer wherever recommendations appear, and say \"near-real-time\", never \"real-time\"."
+    ],
+    "donts": [
+      "**Don't** use vermilion for losses, emphasis or decoration; it means a limit was crossed or something failed.",
+      "**Don't** colour gains green and losses red; use sign plus drawn triangle in ink.",
+      "**Don't** use KPI cards, donuts, gauges or shadows; the figures strip is ruled cells, not cards.",
+      "**Don't** introduce a dark theme or terminal styling; this is projected in lit rooms and printed.",
+      "**Don't** add a second motion idea; marks draw from zero, nothing else moves.",
+      "**Don't** use glyph or emoji icons; icons are authored inline SVG on a 16px grid with a 1.5 stroke."
+    ]
+  }
+}

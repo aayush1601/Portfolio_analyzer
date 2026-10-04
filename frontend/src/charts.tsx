@@ -261,8 +261,8 @@ export function TailHistogram({
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
           <defs>
             <pattern id="tail" width="1.6" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <rect width="1.6" height="3" fill="#f8e3e1" />
-              <rect width="0.6" height="3" fill="#b3261e" />
+              <rect width="1.6" height="3" fill="var(--color-alert-soft)" />
+              <rect width="0.6" height="3" fill="var(--color-alert)" />
             </pattern>
           </defs>
           {counts.map((c, i) => (
@@ -272,7 +272,7 @@ export function TailHistogram({
               y={100 - (c / top) * 100}
               width={Math.max(0, xp(edges[i + 1]) - xp(edges[i]) - 0.3)}
               height={(c / top) * 100}
-              fill={inTail(i) ? 'url(#tail)' : '#1f4e79'}
+              fill={inTail(i) ? 'url(#tail)' : 'var(--color-direct)'}
             />
           ))}
         </svg>
