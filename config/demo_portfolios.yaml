@@ -1,0 +1,20 @@
+# Demo portfolios, copied into every new user's account on first access.
+# Hypothetical holdings. avg_cost = close / NAV on 2024-01-01 (Yahoo close is split-adjusted).
+portfolios:
+  - name: "Demo: stocks + IT fund"
+    # Direct IT stocks plus an IT sector fund: effective IT exposure is higher than it looks.
+    holdings:
+      - { asset_type: STOCK, asset_id: TCS, quantity: 15, avg_cost: 3811.10 }
+      - { asset_type: STOCK, asset_id: INFY, quantity: 40, avg_cost: 1551.35 }
+      - { asset_type: STOCK, asset_id: HDFCBANK, quantity: 120, avg_cost: 849.05 }
+      - { asset_type: STOCK, asset_id: RELIANCE, quantity: 50, avg_cost: 1295.12 }
+      - { asset_type: MF, asset_id: "120594", quantity: 600, avg_cost: 187.22 }
+      - { asset_type: CASH, asset_id: INR, quantity: 50000 }
+  - name: "Demo: funds only"
+    # No direct stocks, yet still exposed to individual companies through the funds.
+    holdings:
+      - { asset_type: MF, asset_id: "122639", quantity: 2500, avg_cost: 70.4621 }
+      - { asset_type: MF, asset_id: "119018", quantity: 150, avg_cost: 1050.311 }
+      - { asset_type: MF, asset_id: "118989", quantity: 800, avg_cost: 161.96 }
+      - { asset_type: MF, asset_id: "133859", quantity: 3000, avg_cost: 35.0757 }
+      - { asset_type: CASH, asset_id: INR, quantity: 20000 }

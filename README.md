@@ -7,6 +7,7 @@
 ## Status
 Phase 1 (foundation) done: FastAPI + React skeleton, Docker, tests, RSS news archiver.
 Phase 2 (market data) done: cleaned daily price panel for the universe + `^NSEI` + `^INDIAVIX` in Parquet.
+Phase 3 (portfolio engine) done: portfolio API with valuation, weights and P/L for stocks, funds and cash.
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -45,8 +46,14 @@ launchctl load ~/Library/LaunchAgents/com.portfolio-intelligence.news.plist   # 
 ## Market data (Phase 2)
 ```bash
 cd backend && uv run python -m app.services.market_data   # after market close; rewrites data/processed/market/prices
+cd backend && uv run python -m app.services.nav_data      # after ~23:00 IST; mutual fund NAVs → data/processed/nav
 ```
 In code: `load_prices(settings.data_dir)` for PriceBar rows, `returns(prices)` for the date × symbol return panel.
+
+## Portfolios (Phase 3)
+`POST/GET /portfolio`, `GET /portfolio/{id}` (valuation, weights, P/L), `PUT /portfolio/{id}/holdings`; see the API docs at http://localhost:8000/docs.
+Local auth stub: every request is user `local`, stored as JSON in `data/portfolios/local/`. A new user starts with the
+demo portfolios in [config/demo_portfolios.yaml](config/demo_portfolios.yaml). Holdings must be in the research universe.
 
 ## Phase 0 feasibility spike
 ```bash

@@ -102,9 +102,16 @@ def save(prices: pd.DataFrame, out_dir: Path) -> None:
     prices.assign(year=prices["date"].dt.year).to_parquet(out_dir, partition_cols=["year"], index=False)
 
 
-def load_prices(data_dir: Path) -> pd.DataFrame:
-    df = pd.read_parquet(data_dir / "processed" / "market" / "prices")
-    return df.drop(columns="year").sort_values(["symbol", "date"], ignore_index=True)
+def read(path: Path, key: str, since: date | None = None) -> pd.DataFrame:
+    """Read a dataset written by save(); `since` skips whole year partitions before it."""
+    df = pd.read_parquet(path, filters=[("year", ">=", since.year)] if since else None).drop(columns="year")
+    if since:
+        df = df[df["date"] >= pd.Timestamp(since)]
+    return df.sort_values([key, "date"], ignore_index=True)
+
+
+def load_prices(data_dir: Path, since: date | None = None) -> pd.DataFrame:
+    return read(data_dir / "processed" / "market" / "prices", "symbol", since)
 
 
 def main() -> None:

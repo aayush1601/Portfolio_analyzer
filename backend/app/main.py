@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
+from app.api import portfolio
 from app.config import get_settings
 from app.utils.log import setup_logging
 
@@ -17,6 +18,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(portfolio.router)
 
 
 @app.get("/health")
