@@ -61,6 +61,7 @@ class StressResult(BaseModel):
     estimated_loss: float  # fraction of portfolio value; negative = loss
     estimated_loss_inr: float
     top_contributors: list[StressContributor]
+    unshocked_unmapped: float  # fund weight we can't see into and that no shock was applied to
 
 
 class FundRisk(BaseModel):

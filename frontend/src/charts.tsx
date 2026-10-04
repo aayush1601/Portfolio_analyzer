@@ -197,7 +197,7 @@ export function ScoreBar({ value }: { value: number | null }) {
 
 /** Where the money sits: one 100% strip, a segment per holding, labelled with its share. */
 export function WeightStrip({ rows }: { rows: { id: string; label: string; kind: 'STOCK' | 'MF' | 'CASH'; weight: number }[] }) {
-  const fill = { STOCK: 'bg-direct', MF: 'bg-[#8fa9c4]', CASH: 'bg-rule' } as const
+  const fill = { STOCK: 'bg-direct', MF: 'hatch-via', CASH: 'bg-rule' } as const
   const sorted = [...rows].sort((a, b) => b.weight - a.weight)
   return (
     <div>
@@ -226,7 +226,8 @@ export function WeightStrip({ rows }: { rows: { id: string; label: string; kind:
   )
 }
 
-/** Daily returns as a histogram; the days beyond VaR are the shaded tail, annotated on the chart. */
+/** Daily returns as a histogram; the days beyond VaR are the shaded tail, annotated on the chart.
+ *  Bars are SVG stretched to the width; all text is HTML so it stays readable at phone width. */
 export function TailHistogram({
   edges,
   counts,
@@ -238,48 +239,50 @@ export function TailHistogram({
   varLoss: number
   odds: number
 }) {
-  const W = 640, H = 170, pad = { l: 8, r: 8, t: 34, b: 26 }
   const lo = edges[0], hi = edges[edges.length - 1]
-  const x = (v: number) => pad.l + ((v - lo) / (hi - lo)) * (W - pad.l - pad.r)
+  const xp = (v: number) => ((v - lo) / (hi - lo)) * 100
   const top = Math.max(...counts, 1)
-  const y = (c: number) => H - pad.b - (c / top) * (H - pad.t - pad.b)
   const cut = -varLoss
-  const tailDays = counts.reduce((a, c, i) => a + (edges[i + 1] <= cut + 1e-12 ? c : 0), 0)
-  const ticks = [lo, 0, hi].filter((v, i, a) => a.indexOf(v) === i)
+  const inTail = (i: number) => edges[i + 1] <= cut + 1e-12
+  const tailDays = counts.reduce((a, c, i) => a + (inTail(i) ? c : 0), 0)
+  const left = xp(cut)
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={`Daily returns; ${tailDays} days fell below ${pct(cut)}`}>
-      <defs>
-        <pattern id="tail" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <rect width="5" height="5" fill="#f8e3e1" />
-          <rect width="2" height="5" fill="#b3261e" />
-        </pattern>
-      </defs>
-      {counts.map((c, i) => {
-        const inTail = edges[i + 1] <= cut + 1e-12
-        return (
-          <rect
-            key={i}
-            x={x(edges[i]) + 0.5}
-            y={y(c)}
-            width={Math.max(0, x(edges[i + 1]) - x(edges[i]) - 1)}
-            height={H - pad.b - y(c)}
-            fill={inTail ? 'url(#tail)' : '#1f4e79'}
-          />
-        )
-      })}
-      <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} stroke="#66707c" />
-      <line x1={x(cut)} x2={x(cut)} y1={pad.t - 6} y2={H - pad.b} stroke="#18222d" strokeDasharray="3 3" />
-      <text x={x(cut) - 6} y={pad.t - 14} textAnchor="end" fontSize="13" fontWeight="700" fill="#18222d">
-        1-in-{odds} bad day: {pct(cut)}
-      </text>
-      <text x={x(cut) - 6} y={pad.t} textAnchor="end" fontSize="12" fill="#4a5663">
-        {tailDays} days fell further
-      </text>
-      {ticks.map((t) => (
-        <text key={t} x={x(t)} y={H - 8} textAnchor={t === lo ? 'start' : t === hi ? 'end' : 'middle'} fontSize="12" fill="#66707c" className="num">
-          {pct(t)}
-        </text>
-      ))}
-    </svg>
+    <figure role="img" aria-label={`Daily returns; ${tailDays} days fell below ${pct(cut)}`}>
+      <div className="relative mb-1 h-10">
+        <div
+          className={`absolute bottom-0 text-[0.8rem] leading-tight ${left < 50 ? 'pl-2 text-left' : 'pr-2 text-right'}`}
+          style={left < 50 ? { left: `${left}%` } : { right: `${100 - left}%` }}
+        >
+          <span className="block font-bold text-ink">1-in-{odds} bad day: {pct(cut)}</span>
+          <span className="text-ink-2">{tailDays} days fell further</span>
+        </div>
+      </div>
+      <div className="relative h-32">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
+          <defs>
+            <pattern id="tail" width="1.6" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="1.6" height="3" fill="#f8e3e1" />
+              <rect width="0.6" height="3" fill="#b3261e" />
+            </pattern>
+          </defs>
+          {counts.map((c, i) => (
+            <rect
+              key={i}
+              x={xp(edges[i]) + 0.15}
+              y={100 - (c / top) * 100}
+              width={Math.max(0, xp(edges[i + 1]) - xp(edges[i]) - 0.3)}
+              height={(c / top) * 100}
+              fill={inTail(i) ? 'url(#tail)' : '#1f4e79'}
+            />
+          ))}
+        </svg>
+        <div className="absolute -top-2 bottom-0 border-l border-dashed border-ink" style={{ left: `${left}%` }} />
+      </div>
+      <div className="num relative h-5 border-t border-ink-3 text-[0.75rem] text-ink-3">
+        <span className="absolute left-0 pt-0.5">{pct(lo)}</span>
+        {lo < 0 && hi > 0 && <span className="absolute -translate-x-1/2 pt-0.5" style={{ left: `${xp(0)}%` }}>{pct(0)}</span>}
+        <span className="absolute right-0 pt-0.5">{pct(hi)}</span>
+      </div>
+    </figure>
   )
 }

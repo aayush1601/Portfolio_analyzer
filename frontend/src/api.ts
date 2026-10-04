@@ -74,6 +74,7 @@ export type StressResult = {
   estimated_loss: number
   estimated_loss_inr: number
   top_contributors: { symbol: string; loss: number }[]
+  unshocked_unmapped: number
 }
 
 export type NewsItem = {

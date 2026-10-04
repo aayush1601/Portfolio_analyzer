@@ -121,6 +121,7 @@ def stress(exp: ExposureReport, shocks: dict[str, float], total_value: float, sc
         estimated_loss=round(loss, 6),
         estimated_loss_inr=round(loss * total_value, 2),
         top_contributors=[StressContributor(symbol=s, loss=round(v, 6)) for s, v in top],
+        unshocked_unmapped=0.0 if UNMAPPED in shocks else exp.unmapped,
     )
 
 

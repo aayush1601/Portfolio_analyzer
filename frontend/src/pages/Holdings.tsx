@@ -194,7 +194,7 @@ export function Holdings({
       />
       <div className="mt-2 mb-5 flex flex-wrap gap-x-4 text-[0.8rem] text-ink-2">
         <span className="inline-flex items-center gap-1.5"><span aria-hidden className="inline-block h-2.5 w-4 bg-direct" />stocks</span>
-        <span className="inline-flex items-center gap-1.5"><span aria-hidden className="inline-block h-2.5 w-4 bg-[#8fa9c4]" />funds</span>
+        <span className="inline-flex items-center gap-1.5"><span aria-hidden className="hatch-via inline-block h-2.5 w-4 outline outline-1 outline-via" />funds</span>
         <span className="inline-flex items-center gap-1.5"><span aria-hidden className="inline-block h-2.5 w-4 bg-rule" />cash</span>
       </div>
       <Table<HoldingValue>

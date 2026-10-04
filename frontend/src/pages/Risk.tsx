@@ -90,10 +90,14 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
     <Figure
       title={
         result
-          ? `If ${scenario}, this portfolio would move about ${signedPct(result.estimated_loss)}: ${inr(result.estimated_loss_inr)}.`
+          ? `If ${scenario}, what’s visible of this portfolio would move about ${signedPct(result.estimated_loss)}: ${inr(result.estimated_loss_inr)}.`
           : 'What a sector shock would do to this portfolio'
       }
-      dek="Shocks hit effective (look-through) sector exposure, so a fall in IT reaches you through your funds too. A linear, one-step estimate, not a forecast."
+      dek={
+        result && result.unshocked_unmapped > 0.0005
+          ? `Not counted: ${pct(result.unshocked_unmapped)} of the portfolio sits in funds whose holdings aren’t loaded yet, so their share of this shock is unknown. A linear, one-step estimate, not a forecast.`
+          : 'Shocks hit effective (look-through) sector exposure, so a fall in IT reaches you through your funds too. A linear, one-step estimate, not a forecast.'
+      }
     >
       <form onSubmit={run} className="space-y-2">
         {rows.map((r, i) => (

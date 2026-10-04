@@ -74,6 +74,8 @@ def test_stress_is_linear_in_effective_sector_exposure(exp):
     assert r.estimated_loss == pytest.approx(-0.048)
     assert r.estimated_loss_inr == pytest.approx(-48_000)
     assert [c.symbol for c in r.top_contributors] == ["TCS", UNMAPPED, "INFY"]
+    assert r.unshocked_unmapped == 0
+    assert stress(exp, {"Information Technology": -0.1}, 1, "c").unshocked_unmapped == pytest.approx(0.44)
 
 
 def sebi_sheet(wb, title, as_of, rows):
