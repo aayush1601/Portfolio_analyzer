@@ -19,6 +19,10 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
+ml = [
+    "torch>=2.14.1",
+    "transformers>=5.18.0",
+]
 # Phase 0 feasibility spike only (yfinance/pandas became main deps in Phase 2).
 spikes = ["requests>=2.32"]
 

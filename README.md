@@ -11,6 +11,7 @@ Phase 3 (portfolio engine) done: portfolio API with valuation, weights and P/L f
 Phase 4 (risk engine) done: `GET /portfolio/{id}/risk` with volatility, Sharpe/Sortino, drawdown, VaR ×3, CVaR, beta, HHI, diversification and a 0–100 risk score ([config/risk_score.yaml](config/risk_score.yaml)).
 Phase 5 (funds + look-through) code done: fund analytics, effective exposure, overlap, stress. **Needs AMC holdings files** (below).
 Phase 6 (news pipeline) done: dedupe, company/sector mapping, importance, reliability, recency → `data/processed/news`.
+Phase 7 (FinBERT sentiment) done: per-headline scores, time-decayed per-ticker aggregates, labelled-sample evaluation.
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -59,6 +60,15 @@ In code: `load_prices(settings.data_dir)` for PriceBar rows, `returns(prices)` f
 `POST/GET /portfolio`, `GET /portfolio/{id}` (valuation, weights, P/L), `PUT /portfolio/{id}/holdings`; see the API docs at http://localhost:8000/docs.
 Local auth stub: every request is user `local`, stored as JSON in `data/portfolios/local/`. A new user starts with the
 demo portfolios in [config/demo_portfolios.yaml](config/demo_portfolios.yaml). Holdings must be in the research universe.
+
+## Sentiment (Phase 7)
+Needs the `ml` group (torch + transformers; ~440 MB model on first run, cached by Hugging Face):
+```bash
+cd backend && uv run --group ml python -m app.services.sentiment score        # new headlines only
+uv run --group ml python -m app.services.sentiment sample 200                 # data/labelled/news_sample.csv
+uv run --group ml python -m app.services.sentiment eval ../data/labelled/news_sample.csv
+```
+Label the sample by hand (positive / neutral / negative) before running `eval`.
 
 ## Fund holdings and look-through exposure (Phase 5)
 1. Download each AMC's monthly portfolio disclosure (Excel) for the universe funds, 24–36 months back, into
