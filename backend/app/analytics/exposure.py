@@ -24,6 +24,11 @@ from app.models.exposure import (
 UNMAPPED = "Other/Unmapped"
 
 
+def fund_overlap(a: pd.Series, b: pd.Series) -> float:
+    """Σ_isin min(h_A, h_B) over two funds' ISIN-indexed weights."""
+    return float(np.minimum(*a.align(b, fill_value=0)).sum())
+
+
 def latest_holdings(h: pd.DataFrame, t: date) -> pd.DataFrame:
     """Point-in-time: per fund, the latest disclosure already published at t (published_at ≤ t)."""
     h = h[h["published_at"] <= t]
@@ -85,7 +90,7 @@ def effective_exposure(
         FundOverlap(
             fund_a=a,
             fund_b=b,
-            overlap=round(float(np.minimum(*fund_isins[a].align(fund_isins[b], fill_value=0)).sum()), 6),
+            overlap=round(fund_overlap(fund_isins[a], fund_isins[b]), 6),
         )
         for a, b in combinations(sorted(fund_isins), 2)
     ]
