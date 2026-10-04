@@ -12,6 +12,7 @@ Phase 4 (risk engine) done: `GET /portfolio/{id}/risk` with volatility, Sharpe/S
 Phase 5 (funds + look-through) code done: fund analytics, effective exposure, overlap, stress. **Needs AMC holdings files** (below).
 Phase 6 (news pipeline) done: dedupe, company/sector mapping, importance, reliability, recency → `data/processed/news`.
 Phase 7 (FinBERT sentiment) done: per-headline scores, time-decayed per-ticker aggregates, labelled-sample evaluation.
+Phase 8 (news → portfolio impact) done: `GET /portfolio/{id}/news`, exposure-weighted impact with alert flag (`impact` in config/news_sources.yaml).
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)

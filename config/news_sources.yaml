@@ -85,3 +85,12 @@ importance:
 
 # recency weight = 0.5 ** (age_hours / half_life_hours)
 recency_half_life_hours: 24
+
+# ---- Phase 8: news → portfolio impact (design assumptions, tune in the ablation).
+# impact = score · importance · recency · reliability · exposure, where exposure is Σ effective company
+# exposure E_s of the held companies the article names, or, if it names none you hold, sector_discount · Σ E_k
+# over its sectors (sector news, or a peer's news spilling over).
+impact:
+  lookback_hours: 72
+  sector_discount: 0.5
+  alert_threshold: 0.02  # alert when portfolio impact ≤ −0.02

@@ -1,9 +1,9 @@
-"""Portfolio routes (FR2–FR5, FR8): create, list, value, replace holdings, risk, exposure, stress.
+"""Portfolio routes (FR2–FR6, FR8, FR10): holdings, valuation, risk, exposure, stress, news impact.
 
 Contract: docs/api/openapi.yaml.
 """
 
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 from typing import Annotated
 
@@ -12,16 +12,19 @@ import yaml
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from app.analytics.exposure import UNMAPPED, effective_exposure, latest_holdings, stress
+from app.analytics.impact import portfolio_news
 from app.analytics.portfolio import MissingPrice, value_portfolio
 from app.analytics.risk import asset_returns, risk_report
 from app.config import get_settings
 from app.models.exposure import ExposureReport, StressRequest, StressResult
+from app.models.news import PortfolioNews
 from app.models.portfolio import AssetType, Holding, Holdings, Portfolio, PortfolioCreate, PortfolioSnapshot
 from app.models.risk import RiskReport
 from app.services.fund_holdings import load_holdings
 from app.services.market_data import load_prices
 from app.services.nav_data import load_navs
 from app.services.portfolio_store import PID_PATTERN, PortfolioStore
+from app.services.sentiment import news_with_sentiment
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 PortfolioId = Annotated[str, Path(pattern=PID_PATTERN)]
@@ -160,6 +163,23 @@ def run_stress(portfolio_id: PortfolioId, body: StressRequest, user: User, store
     p = owned(store, user, portfolio_id)
     snap = snapshot(p, *load_market(date.today() - timedelta(days=400)))
     return stress(exposure_for(p, snap), body.shocks, snap.total_value, body.scenario)
+
+
+@router.get("/{portfolio_id}/news")
+def get_news(
+    portfolio_id: PortfolioId,
+    user: User,
+    store: Store,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> PortfolioNews:
+    p = owned(store, user, portfolio_id)
+    exp = exposure_for(p, snapshot(p, *load_market(date.today() - timedelta(days=400))))
+    cfg = read_config("news_sources.yaml")
+    try:
+        news = news_with_sentiment(get_settings().data_dir)
+    except FileNotFoundError:
+        news = pd.DataFrame(columns=["published_at"])  # pipeline not run yet: empty view with a note
+    return portfolio_news(news, exp, datetime.now(UTC), cfg["impact"], cfg["recency_half_life_hours"], limit)
 
 
 @router.put("/{portfolio_id}/holdings")
