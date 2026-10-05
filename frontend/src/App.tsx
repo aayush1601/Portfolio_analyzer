@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, useApi, type Exposure, type PortfolioSummary, type Reference, type Risk, type Snapshot } from './api'
 import { Actions } from './pages/Actions'
 import { HoldingsEditor } from './pages/Holdings'
+import { ImportPage, PhoneImport } from './pages/Import'
 import { LookThrough } from './pages/LookThrough'
 import { NewsPage } from './pages/News'
 import { Overview } from './pages/Overview'
@@ -16,13 +17,13 @@ const TABS = [
   { id: 'news', label: 'News' },
   { id: 'insights', label: 'Insights' },
 ] as const
-type Tab = (typeof TABS)[number]['id'] | 'new'
+type Tab = (typeof TABS)[number]['id'] | 'new' | 'import'
 const ALIASES: Record<string, Tab> = { holdings: 'overview', actions: 'insights' } // links from the previous build
 
 function parseHash(): [Tab, string | null] {
   const [, raw, pid] = window.location.hash.split('/')
   const tab = ALIASES[raw] ?? raw
-  return [(TABS.some((x) => x.id === tab) || tab === 'new' ? tab : 'overview') as Tab, pid || null]
+  return [(TABS.some((x) => x.id === tab) || tab === 'new' || tab === 'import' ? tab : 'overview') as Tab, pid || null]
 }
 
 // Route: #/<tab>/<portfolio id>, so every view can be linked, bookmarked and reloaded.
@@ -43,8 +44,10 @@ export default function App() {
   const [tab, routePid, go] = useRoute()
   const reference = useApi<Reference>('/reference')
   const portfolios = useApi<PortfolioSummary[]>('/portfolio')
-  const pid = routePid ?? portfolios.data?.[0]?.portfolio_id ?? null
-  const live = pid && tab !== 'new'
+  // On #/import/<token> the second segment is a phone upload token, not a portfolio id.
+  const phoneToken = tab === 'import' ? routePid : null
+  const pid = (tab === 'import' ? null : routePid) ?? portfolios.data?.[0]?.portfolio_id ?? null
+  const live = pid && tab !== 'new' && tab !== 'import'
   const snap = useApi<Snapshot>(live ? `/portfolio/${pid}` : null)
   const exposure = useApi<Exposure>(live ? `/portfolio/${pid}/exposure` : null)
   const risk = useApi<Risk>(live ? `/portfolio/${pid}/risk` : null)
@@ -60,6 +63,13 @@ export default function App() {
     document.title = current ? `${current.name} · Portfolio Intelligence` : 'Portfolio Intelligence'
   }, [current])
 
+  const { reload: reloadPortfolios } = portfolios
+  const { reload: reloadReference } = reference
+  const afterImport = useCallback(() => {
+    reloadPortfolios()
+    reloadReference() // imported funds outside the universe join the reference list
+  }, [reloadPortfolios, reloadReference])
+
   const refresh = () => {
     snap.reload()
     exposure.reload()
@@ -67,7 +77,11 @@ export default function App() {
   }
 
   let page
-  if (!reference.data) {
+  if (phoneToken) {
+    page = <PhoneImport token={phoneToken} />
+  } else if (tab === 'import') {
+    page = <ImportPage onImported={afterImport} />
+  } else if (!reference.data) {
     page = <Status<Reference> q={reference} what="the portfolio service">{() => null}</Status>
   } else if (!portfolios.data) {
     page = <Status<PortfolioSummary[]> q={portfolios} what="portfolios">{() => null}</Status>
@@ -151,6 +165,12 @@ export default function App() {
                   </option>
                 ))}
               </select>
+              <a
+                href="#/import"
+                className="no-print inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-3 py-1.5 text-[0.85rem] font-bold whitespace-nowrap text-ink no-underline hover:border-ink-3"
+              >
+                Import funds
+              </a>
               <button
                 onClick={() => go('new', pid)}
                 className="no-print inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-ink px-3 py-1.5 text-[0.85rem] font-bold whitespace-nowrap text-white hover:bg-brand-deep"

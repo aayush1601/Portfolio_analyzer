@@ -31,6 +31,7 @@ from app.models.portfolio import (
 )
 from app.models.recommendation import RecommendationReport
 from app.models.risk import RiskReport
+from app.services.cas_import import load_registry
 from app.services.fund_holdings import load_holdings
 from app.services.market_data import load_prices
 from app.services.nav_data import load_navs
@@ -55,12 +56,13 @@ def read_config(name: str) -> dict:
     return yaml.safe_load((get_settings().config_dir / name).read_text())
 
 
-@lru_cache
 def universe_assets() -> dict[AssetType, set[str]]:
+    """Holdable assets: the research universe plus any fund registered by a CAS import."""
     u = read_config("universe.yaml")
     return {
         AssetType.STOCK: {s["symbol"] for s in u["stocks"]},
-        AssetType.MF: {str(f["scheme_code"]) for f in u["mutual_funds"]},
+        AssetType.MF: {str(f["scheme_code"]) for f in u["mutual_funds"]}
+        | set(load_registry(get_settings().data_dir)),
         AssetType.CASH: {"INR"},
     }
 

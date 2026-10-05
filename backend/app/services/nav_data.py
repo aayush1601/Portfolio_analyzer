@@ -5,6 +5,7 @@ Run daily after ~23:00 IST:  uv run python -m app.services.nav_data   (from back
 Output: data/processed/nav/year=YYYY/…parquet
 """
 
+import json
 import logging
 from datetime import date
 from pathlib import Path
@@ -20,9 +21,14 @@ log = logging.getLogger(__name__)
 NAV_PUBLISHED_IST = pd.Timedelta(hours=23)  # AMFI publishes ~21:00–23:00 IST (docs/data_sources.md)
 
 
-def load_scheme_codes(config_dir: Path) -> list[str]:
+def load_scheme_codes(config_dir: Path, data_dir: Path | None = None) -> list[str]:
+    """Universe funds, plus funds registered by CAS imports (data_dir/processed/extra_funds.json)."""
     u = yaml.safe_load((config_dir / "universe.yaml").read_text())
-    return [str(f["scheme_code"]) for f in u["mutual_funds"]]
+    codes = [str(f["scheme_code"]) for f in u["mutual_funds"]]
+    extra = data_dir / "processed" / "extra_funds.json" if data_dir else None
+    if extra and extra.exists():
+        codes += [c for c in json.loads(extra.read_text()) if c not in codes]
+    return codes
 
 
 def parse_mfapi(payload: dict, scheme_code: str) -> pd.DataFrame:
@@ -58,7 +64,7 @@ def main() -> None:
 
     settings = get_settings()
     setup_logging(settings.log_level)
-    codes = load_scheme_codes(settings.config_dir)
+    codes = load_scheme_codes(settings.config_dir, settings.data_dir)
     with httpx.Client(timeout=30) as client:
         navs = collect(codes, client)
     save(navs, settings.data_dir / "processed" / "nav")

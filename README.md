@@ -65,6 +65,14 @@ In code: `load_prices(settings.data_dir)` for PriceBar rows, `returns(prices)` f
 Local auth stub: every request is user `local`, stored as JSON in `data/portfolios/local/`. A new user starts with the
 demo portfolios in [config/demo_portfolios.yaml](config/demo_portfolios.yaml). Holdings must be in the research universe.
 
+## Import funds from a CAS
+**Import funds** (top bar) reads a Consolidated Account Statement PDF from CAMS, KFintech or MF Central (password: PAN in
+capitals) with [casparser](https://github.com/codereverser/casparser), creates a portfolio of every fund in it and shows its
+risk rating. The PDF and PAN are processed in memory and never stored. Funds outside the research universe are
+registered on import (`data/processed/extra_funds.json`, NAVs from mfapi.in) and refreshed by `nav_data`.
+To upload from a phone, scan the QR code on the Import page; the phone must be on the same Wi-Fi (the dev server
+already listens on the LAN). Each QR code carries a one-time token valid for 15 minutes.
+
 ## Expected-return models (Phase 9)
 ```bash
 cd backend && uv run --group ml python -m app.services.ml   # ~2 min: walk-forward eval, final XGBoost, SHAP, model card
