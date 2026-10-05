@@ -44,6 +44,18 @@ export type Exposure = {
   notes: string[]
 }
 
+export type HoldingPeriod = {
+  label: string
+  days: number
+  prob_loss: number
+  median_return: number
+  bad_return: number
+  bad_inr: number
+  observed_prob_loss: number | null
+  observed_bad_return: number | null
+  observed_windows: number
+}
+
 export type Risk = {
   as_of: string
   lookback_days: number
@@ -66,6 +78,11 @@ export type Risk = {
   risk_score: number
   risk_band: string
   score_weights_version: string
+  score_drawdown: number
+  score_drawdown_days: number
+  holding_periods: HoldingPeriod[]
+  holding_history_days: number
+  holding_mean_return_ann: number
   return_histogram: { edges: number[]; counts: number[] }
   notes: string[]
 }

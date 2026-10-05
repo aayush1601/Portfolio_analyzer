@@ -15,6 +15,8 @@ CFG = {
         "hhi": {"weight": 3, "low": 0.0, "high": 1.0},
     },
     "bands": {"Low": 33, "Moderate": 66, "High": 100},
+    "drawdown_window_days": 300,
+    "holding_period": {"history_days": 300, "horizons": {"1 month": 21}, "bad_case_quantile": 0.05},
 }
 
 
@@ -96,8 +98,42 @@ def test_risk_report_notes_and_errors():
     R.loc[idx[40:], "b"] = np.tile([0.02, -0.01], 30)  # b listed later: 60 overlapping days
     r = report(R, {"a": 0.5, "b": 0.5})
     assert r.observations == 60
-    assert len(r.notes) == 2  # shortened lookback + unset risk-free rate
+    assert len(r.notes) == 3  # shortened lookback, short scoring window, unset risk-free rate
     with pytest.raises(ValueError, match="no risky assets"):
         report(R, {})
     with pytest.raises(ValueError, match="overlapping history"):
         report(R.tail(20), {"a": 1.0})
+
+
+def test_holding_period_stats_hand_computed():
+    # daily log returns N(0.0004, 0.01), 252 days → N(0.1008, 0.0100·√252 = 0.158745)
+    p, median, bad = risk.holding_period_stats(0.0004, 0.01, 252)
+    assert p == pytest.approx(0.2627, abs=1e-4)  # Φ(−0.1008 / 0.158745) = Φ(−0.63498)
+    assert median == pytest.approx(np.expm1(0.1008))  # 10.61%
+    assert bad == pytest.approx(np.expm1(0.1008 - 1.6448536 * 0.158745), abs=1e-6)  # −14.81%
+
+
+def test_time_diversification_cuts_both_ways():
+    up = [risk.holding_period_stats(0.0004, 0.01, h) for h in (21, 252, 1260)]
+    assert up[0][0] > up[1][0] > up[2][0]  # positive drift: a loss gets less likely the longer you hold
+    assert up[0][2] > up[1][2]  # but a 1-year bad case is a bigger loss than a 1-month one
+    down = [risk.holding_period_stats(-0.0004, 0.01, h)[0] for h in (21, 252, 1260)]
+    assert down[0] < down[1] < down[2]  # negative drift: holding longer makes a loss more likely
+
+
+def test_observed_holding_windows():
+    r = pd.Series([0.1, -0.05, 0.1, -0.05])
+    p, bad, n = risk.observed_holding(r, 2)
+    # every 2-day window: 1.1 × 0.95 − 1 = 4.5%, so none ended down
+    assert (p, n) == (0.0, 3) and bad == pytest.approx(0.045)
+    assert risk.observed_holding(r, 3) == (None, None, 0)  # needs 2h days
+
+
+def test_score_drawdown_uses_the_fixed_window_not_the_chosen_one():
+    idx = pd.bdate_range("2024-01-01", periods=300)
+    a = np.r_[np.full(10, -0.05), np.tile([0.002, -0.001], 145)]  # crash early, gently up since
+    R = pd.DataFrame({"a": a}, index=idx)
+    r = report(R, {"a": 1.0}, lookback=60)
+    assert r.max_drawdown > -0.01  # the last 60 days look calm
+    assert r.score_drawdown == pytest.approx(0.95**10 - 1, abs=1e-6)  # the score still sees the crash
+    assert r.score_drawdown_days == 300

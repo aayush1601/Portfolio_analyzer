@@ -142,8 +142,10 @@ def get_risk(
     lookback_days: Annotated[int, Query(ge=60, le=1260)] = 252,
 ) -> RiskReport:
     p = owned(store, user, portfolio_id)
-    # ~1.5 calendar days per trading day, plus holidays
-    prices, navs = load_market(date.today() - timedelta(days=int(lookback_days * 1.5) + 30))
+    cfg = read_config("risk_score.yaml")
+    # ~1.5 calendar days per trading day, plus holidays; the score and holding view need longer history
+    days = max(lookback_days, cfg["drawdown_window_days"], cfg["holding_period"]["history_days"])
+    prices, navs = load_market(date.today() - timedelta(days=int(days * 1.5) + 30))
     snap = snapshot(p, prices, navs)
     weights = pd.Series({h.asset_id: h.weight for h in snap.holdings if h.asset_type is not AssetType.CASH})
     R = asset_returns(prices, navs)
@@ -155,7 +157,8 @@ def get_risk(
             lookback=lookback_days,
             confidence=confidence,
             rf=read_config("universe.yaml")["risk_free"]["annual_rate"],
-            cfg=read_config("risk_score.yaml"),
+            cfg=cfg,
+            portfolio_value=snap.total_value,
         )
     except ValueError as e:
         raise HTTPException(422, str(e)) from e

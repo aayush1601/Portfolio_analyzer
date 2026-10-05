@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Riskometer, TailHistogram } from '../charts'
-import { api, useApi, type Reference, type Risk, type StressResult } from '../api'
+import { api, useApi, type HoldingPeriod, type Reference, type Risk, type StressResult } from '../api'
 import { Button, Card, IconPlus, IconTrash, Notes, Plate, Segmented, Status } from '../ui'
-import { fixed, inr, pct, signedPct } from '../format'
+import { fixed, inr, pct, signedInr, signedPct } from '../format'
 
 const LOOKBACKS = [
   { days: 63, label: '3 months' },
@@ -111,6 +111,57 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
   )
 }
 
+function holdingHeadline(h: HoldingPeriod[]) {
+  const first = h[0], last = h[h.length - 1]
+  if (!first || !last) return 'How holding longer changes the odds'
+  return last.prob_loss < first.prob_loss
+    ? `The longer you hold, the less likely a loss: ${pct(first.prob_loss, 0)} over ${first.label}, ${pct(last.prob_loss, 0)} over ${last.label}.`
+    : `This mix has averaged a negative return, so holding longer makes a loss more likely: ${pct(first.prob_loss, 0)} over ${first.label}, ${pct(last.prob_loss, 0)} over ${last.label}.`
+}
+
+/** Time diversification, both halves: the chance of a loss vs how wide the outcomes spread. */
+function Holding({ r }: { r: Risk }) {
+  const years = Math.round(r.holding_history_days / 252)
+  return (
+    <Card
+      title={holdingHeadline(r.holding_periods)}
+      dek={`But the range of outcomes widens the longer you hold. Estimated from the last ${years} years of today’s mix, which averaged ${signedPct(r.holding_mean_return_ann)} a year; if the future is weaker, these chances of a loss are too optimistic.`}
+      source="Estimate: daily log returns assumed independent and normal. “Actually happened” counts every past window of that length; they overlap, so long horizons rest on few truly independent periods."
+    >
+      <ul className="space-y-3">
+        {r.holding_periods.map((h) => (
+          <li key={h.label} className="grid grid-cols-[8.5rem_minmax(0,1fr)] items-center gap-4 rounded-xl border border-line p-4">
+            <div>
+              <p className="text-[0.82rem] font-bold text-ink-2">Held for {h.label}</p>
+              <p className="num text-[1.6rem] leading-tight font-extrabold">{pct(h.prob_loss, 0)}</p>
+              <p className="text-[0.78rem] text-ink-2">chance of ending down</p>
+              <div className="mt-1.5 h-1.5 rounded-full bg-line-soft" role="img" aria-label={`${pct(h.prob_loss, 0)} chance of a loss`}>
+                <div className="h-full rounded-full bg-loss" style={{ width: `${h.prob_loss * 100}%` }} />
+              </div>
+            </div>
+            <dl className="space-y-1.5 text-[0.85rem]">
+              <div className="flex flex-wrap justify-between gap-x-3">
+                <dt className="text-ink-3">Typical outcome</dt>
+                <dd className="num font-bold whitespace-nowrap">{signedPct(h.median_return)}</dd>
+              </div>
+              <div className="flex flex-wrap justify-between gap-x-3">
+                <dt className="text-ink-3">Bad case (1 in 20)</dt>
+                <dd className={`num font-bold whitespace-nowrap ${h.bad_return < 0 ? 'text-loss' : ''}`}>
+                  {signedPct(h.bad_return)} <span className="font-medium text-ink-2">({signedInr(h.bad_inr)})</span>
+                </dd>
+              </div>
+              <div className="flex flex-wrap justify-between gap-x-3 border-t border-line-soft pt-1.5">
+                <dt className="text-ink-3">Actually happened</dt>
+                <dd className="num whitespace-nowrap">{h.observed_prob_loss === null ? 'not enough history' : `${pct(h.observed_prob_loss, 0)} ended down`}</dd>
+              </div>
+            </dl>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  )
+}
+
 export function RiskPage({ pid, reference }: { pid: string; reference: Reference }) {
   const [lookback, setLookback] = useState(252)
   const [confidence, setConfidence] = useState(0.95)
@@ -167,7 +218,11 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
               </div>
               <div>
                 <h3 className="border-b border-line pb-2 text-[1rem] font-extrabold text-ink">Losses</h3>
-                <Metric label="Worst fall" value={pct(r.max_drawdown)} help="Largest peak-to-trough drop in the window." />
+                <Metric
+                  label="Worst fall"
+                  value={pct(r.max_drawdown)}
+                  help={`Largest peak-to-trough drop in the chosen window. The risk score always uses the worst fall over the last ${Math.round(r.score_drawdown_days / 252)} years: ${pct(r.score_drawdown)}.`}
+                />
                 <Metric label="1-day VaR, historical" value={pct(r.var_1d.historical)} help={`Loss exceeded on 1 day in ${odds}, read from past days.`} />
                 <Metric label="1-day VaR, parametric" value={pct(r.var_1d.parametric)} help="Same, assuming returns are normally distributed." />
                 <Metric label="1-day VaR, Monte Carlo" value={pct(r.var_1d.monte_carlo)} help="Same, from 10,000 simulated days (seeded)." />
@@ -177,7 +232,10 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
           </Card>
         )}
       </Status>
-      <Stress pid={pid} reference={reference} />
+      <div className="grid gap-5">
+        {q.data && <Holding r={q.data} />}
+        <Stress pid={pid} reference={reference} />
+      </div>
     </div>
   )
 }

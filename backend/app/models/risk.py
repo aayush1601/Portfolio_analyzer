@@ -16,6 +16,20 @@ class Histogram(BaseModel):
     counts: list[int]
 
 
+class HoldingPeriod(BaseModel):
+    """How today's mix might end up after holding it for `days` trading days."""
+
+    label: str
+    days: int
+    prob_loss: float  # chance of ending below today's value
+    median_return: float  # typical outcome
+    bad_return: float  # 1-in-20 bad outcome (5% quantile)
+    bad_inr: float
+    observed_prob_loss: float | None  # share of past windows of this length that ended down
+    observed_bad_return: float | None
+    observed_windows: int  # overlapping windows behind the observed figures (0 = not enough history)
+
+
 class RiskReport(BaseModel):
     as_of: date
     lookback_days: int
@@ -26,7 +40,9 @@ class RiskReport(BaseModel):
     volatility_ann: float
     sharpe: float
     sortino: float
-    max_drawdown: float
+    max_drawdown: float  # within the chosen window
+    score_drawdown: float  # over the fixed scoring window (what the risk score uses)
+    score_drawdown_days: int
     var_1d: VaR
     cvar_1d: float
     beta: float  # vs NIFTY 50 (^NSEI)
@@ -38,5 +54,8 @@ class RiskReport(BaseModel):
     risk_score: int
     risk_band: str
     score_weights_version: str
+    holding_periods: list[HoldingPeriod]
+    holding_history_days: int  # daily history the holding-period estimates use
+    holding_mean_return_ann: float  # the average return they assume continues
     return_histogram: Histogram  # the portfolio's daily returns over the window, for the tail chart
     notes: list[str]

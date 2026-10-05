@@ -9,7 +9,7 @@ from statistics import NormalDist
 import numpy as np
 import pandas as pd
 
-from app.models.risk import Histogram, RiskReport, VaR
+from app.models.risk import Histogram, HoldingPeriod, RiskReport, VaR
 
 TRADING_DAYS = 252
 MC_SIMS = 10_000
@@ -76,6 +76,26 @@ def risk_score(metrics: dict[str, float], cfg: dict) -> tuple[int, str]:
     return score, band
 
 
+def holding_period_stats(mu: float, sigma: float, h: int, q: float = 0.05) -> tuple[float, float, float]:
+    """(P(loss), median return, q-quantile return) after h days, if daily log returns are i.i.d. N(mu, sigma).
+
+    The h-day log return is N(mu·h, sigma·√h): its spread grows with √h while its drift grows with h, so a
+    positive drift makes a loss less likely over time even as the size of a bad outcome keeps growing.
+    """
+    m, s = mu * h, sigma * np.sqrt(h)
+    if s == 0:
+        return float(m < 0), float(np.expm1(m)), float(np.expm1(m))
+    return NormalDist().cdf(-m / s), float(np.expm1(m)), float(np.expm1(m + NormalDist().inv_cdf(q) * s))
+
+
+def observed_holding(r: pd.Series, h: int, q: float = 0.05) -> tuple[float | None, float | None, int]:
+    """Share of past h-day windows that ended down, and their q-quantile (needs at least 2h days)."""
+    if len(r) < 2 * h:
+        return None, None, 0
+    window = np.expm1(np.log1p(r).rolling(h).sum().dropna())
+    return float((window < 0).mean()), float(np.quantile(window, q)), int(len(window))
+
+
 def risk_report(
     R: pd.DataFrame,
     weights: pd.Series,
@@ -85,6 +105,7 @@ def risk_report(
     confidence: float,
     rf: float | None,
     cfg: dict,
+    portfolio_value: float = 0.0,
 ) -> RiskReport:
     """R: asset returns (date × asset_id); market: benchmark returns.
 
@@ -94,7 +115,8 @@ def risk_report(
     notes = []
     if weights.empty:
         raise ValueError("portfolio has no risky assets")
-    R = R[weights.index].dropna().tail(lookback)
+    R_all = R[weights.index].dropna()
+    R = R_all.tail(lookback)
     if len(R) < 30:
         raise ValueError(f"only {len(R)} days of overlapping history; need at least 30")
     if len(R) < lookback:
@@ -106,7 +128,35 @@ def risk_report(
     rf = rf or 0.0
 
     r = R @ weights
+    r_all = R_all @ weights
     rf_d = rf / TRADING_DAYS
+    dd_days = cfg["drawdown_window_days"]
+    r_dd = r_all.tail(dd_days)
+    if len(r_dd) < dd_days:
+        notes.append(
+            f"the risk score's worst fall uses {len(r_dd)} trading days (short history), not {dd_days}"
+        )
+    hp = cfg["holding_period"]
+    r_hold = r_all.tail(hp["history_days"])
+    log_r = np.log1p(r_hold)
+    mu, sigma = float(log_r.mean()), float(log_r.std())
+    holding = []
+    for label, h in hp["horizons"].items():
+        p_loss, median, bad = holding_period_stats(mu, sigma, h, hp["bad_case_quantile"])
+        obs_p, obs_bad, n = observed_holding(r_hold, h, hp["bad_case_quantile"])
+        holding.append(
+            HoldingPeriod(
+                label=label,
+                days=h,
+                prob_loss=p_loss,
+                median_return=median,
+                bad_return=bad,
+                bad_inr=round(bad * portfolio_value, 2),
+                observed_prob_loss=obs_p,
+                observed_bad_return=obs_bad,
+                observed_windows=n,
+            )
+        )
     ret_ann = float(r.mean() * TRADING_DAYS)
     vol_ann = float(r.std() * np.sqrt(TRADING_DAYS))
     downside = float(np.sqrt((np.minimum(r - rf_d, 0) ** 2).mean()) * np.sqrt(TRADING_DAYS))
@@ -115,7 +165,7 @@ def risk_report(
 
     metrics = dict(
         volatility_ann=vol_ann,
-        max_drawdown=max_drawdown(r),
+        max_drawdown=max_drawdown(r_dd),
         var_1d_95=var_historical(r, 0.95),
         beta=beta(r, market),
         hhi=hhi(weights),
@@ -132,7 +182,9 @@ def risk_report(
         volatility_ann=vol_ann,
         sharpe=(ret_ann - rf) / vol_ann if vol_ann else 0.0,
         sortino=(ret_ann - rf) / downside if downside else 0.0,
-        max_drawdown=metrics["max_drawdown"],
+        max_drawdown=max_drawdown(r),
+        score_drawdown=metrics["max_drawdown"],
+        score_drawdown_days=len(r_dd),
         var_1d=VaR(
             historical=var_historical(r, confidence),
             parametric=var_parametric(r, confidence),
@@ -147,6 +199,9 @@ def risk_report(
         risk_score=score,
         risk_band=band,
         score_weights_version=cfg["version"],
+        holding_periods=holding,
+        holding_history_days=len(r_hold),
+        holding_mean_return_ann=float(np.expm1(mu * TRADING_DAYS)),
         return_histogram=Histogram(edges=edges.round(6).tolist(), counts=counts.tolist()),
         notes=notes,
     )
