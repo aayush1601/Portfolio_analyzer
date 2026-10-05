@@ -1,7 +1,8 @@
 """FastAPI entrypoint. Locally: `uv run uvicorn app.main:app --reload` (from backend/)."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 
 from app import __version__
 from app.api import backtests, funds, imports, portfolio, reference
@@ -19,6 +20,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(portfolio.router)
+
+
+@app.middleware("http")
+async def fresh_data(request: Request, call_next):
+    """On AWS, mirror the latest S3 data into /tmp before serving (at most every 5 minutes per container)."""
+    if settings.storage == "s3":
+        from app.aws.storage import sync_down
+
+        await run_in_threadpool(sync_down)
+    return await call_next(request)
+
+
 app.include_router(funds.router)
 app.include_router(reference.router)
 app.include_router(imports.router)

@@ -13,6 +13,7 @@ import segno
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 
 from app.api.portfolio import Store, User, read_config
+from app.aws.storage import persist
 from app.config import get_settings
 from app.models.portfolio import Holding, PortfolioCreate
 from app.services import cas_import as cas
@@ -31,9 +32,14 @@ def lan_ip() -> str:
 
 
 @router.post("/session")
-def open_session(port: Annotated[int, Query(ge=1, le=65535)] = 5173) -> dict:
+def open_session(
+    port: Annotated[int, Query(ge=1, le=65535)] = 5173,
+    origin: Annotated[str | None, Query(pattern=r"^https://[A-Za-z0-9.-]+$")] = None,
+) -> dict:
+    """origin: the page's own https origin (deployed); without it the QR uses this machine's LAN address."""
     token = cas.new_token()
-    url = f"http://{lan_ip()}:{port}/#/import/{token}"
+    base = origin or f"http://{lan_ip()}:{port}"
+    url = f"{base}/#/import/{token}"
     svg = segno.make(url, error="m").svg_inline(scale=5, dark="#1e2235", light="#ffffff", border=2)
     return {"token": token, "phone_url": url, "qr_svg": svg, "expires_in": cas.TOKEN_TTL_S}
 
@@ -81,6 +87,8 @@ async def import_cas(
     finally:
         del password  # never kept beyond the parse
 
+    persist("processed/extra_funds.json")
+    persist("processed/nav")
     holdings = [
         Holding(
             asset_type="MF",

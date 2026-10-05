@@ -122,15 +122,20 @@ def collect(feeds: list[FeedConfig], out_dir: Path, client: httpx.Client) -> int
     return len(new)
 
 
-def main() -> None:
-    from app.utils.log import setup_logging
-
-    settings = get_settings()
-    setup_logging(settings.log_level)
+def refresh(settings=None):
+    """One run of this job; called by the CLI below and by the scheduled Lambda (app/aws/handlers.py)."""
+    settings = settings or get_settings()
     headers = {"User-Agent": "Mozilla/5.0 (portfolio-intelligence academic project)"}
     with httpx.Client(timeout=30, headers=headers, follow_redirects=True) as client:
         n = collect(load_feeds(settings.config_dir), settings.data_dir / "raw" / "news" / "rss", client)
     log.info("collection done", extra={"fields": {"new_items": n}})
+
+
+def main() -> None:
+    from app.utils.log import setup_logging
+
+    setup_logging(get_settings().log_level)
+    refresh()
 
 
 if __name__ == "__main__":

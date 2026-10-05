@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Path
 from pydantic import BaseModel, Field
 
+from app.aws.storage import persist
 from app.config import get_settings
 from app.services import backtest as svc
 
@@ -22,9 +23,11 @@ class BacktestRequest(BaseModel):
 def _run(run_id: str, overrides: dict) -> None:
     try:
         svc.run(overrides, run_id)
+        persist(f"backtests/{run_id}")
     except Exception as e:  # surfaced through the run's status instead of being lost in a background thread
         f = svc.run_dir(get_settings().data_dir, run_id) / "results.json"
         f.write_text(svc.json.dumps({"run_id": run_id, "status": "FAILED", "error": str(e)}))
+        persist(f"backtests/{run_id}")
         raise
 
 
@@ -37,6 +40,10 @@ def start(body: BacktestRequest, background: BackgroundTasks) -> dict:
     run_dir = svc.run_dir(get_settings().data_dir, run_id)
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "results.json").write_text(svc.json.dumps({"run_id": run_id, "status": "QUEUED"}))
+    if get_settings().storage == "s3":
+        # Lambda freezes after the response, so background work would never finish: run inline (~15 s).
+        _run(run_id, overrides)
+        return {"run_id": run_id, "status": "DONE"}
     background.add_task(_run, run_id, overrides)
     return {"run_id": run_id, "status": "QUEUED"}
 

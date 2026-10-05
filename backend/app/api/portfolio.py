@@ -57,8 +57,14 @@ def current_user() -> str:
 
 @lru_cache
 def get_store() -> PortfolioStore:
+    """JSON files locally; DynamoDB on AWS (same methods)."""
     s = get_settings()
-    return PortfolioStore(s.data_dir / "portfolios", s.config_dir / "demo_portfolios.yaml")
+    demo = s.config_dir / "demo_portfolios.yaml"
+    if s.storage == "s3":
+        from app.aws.ddb_store import DynamoPortfolioStore
+
+        return DynamoPortfolioStore(s.ddb_table, demo)  # type: ignore[return-value]
+    return PortfolioStore(s.data_dir / "portfolios", demo)
 
 
 def read_config(name: str) -> dict:

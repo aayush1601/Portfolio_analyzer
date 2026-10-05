@@ -139,11 +139,9 @@ def load_news(data_dir: Path, since: datetime | None = None) -> pd.DataFrame:
     return read(data_dir / "processed" / "news", "published_at", since)
 
 
-def main() -> None:
-    from app.utils.log import setup_logging
-
-    settings = get_settings()
-    setup_logging(settings.log_level)
+def refresh(settings=None):
+    """One run of this job; called by the CLI below and by the scheduled Lambda (app/aws/handlers.py)."""
+    settings = settings or get_settings()
     news = process(
         load_raw(settings.data_dir / "raw" / "news" / "rss"), Mapper.from_config(settings.config_dir)
     )
@@ -159,6 +157,13 @@ def main() -> None:
             }
         },
     )
+
+
+def main() -> None:
+    from app.utils.log import setup_logging
+
+    setup_logging(get_settings().log_level)
+    refresh()
 
 
 if __name__ == "__main__":

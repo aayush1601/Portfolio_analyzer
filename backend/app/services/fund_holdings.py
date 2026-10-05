@@ -140,11 +140,9 @@ def load_holdings(data_dir: Path) -> pd.DataFrame:
     return pd.read_parquet(f) if f.exists() else pd.DataFrame(columns=COLUMNS)
 
 
-def main() -> None:
-    from app.utils.log import setup_logging
-
-    settings = get_settings()
-    setup_logging(settings.log_level)
+def refresh(settings=None):
+    """One run of this job; called by the CLI below and by the scheduled Lambda (app/aws/handlers.py)."""
+    settings = settings or get_settings()
     names, isin_map = load_universe_maps(settings.config_dir)
     out = ingest(settings.data_dir / "raw" / "mutual_funds" / "holdings", names, isin_map)
     dest = settings.data_dir / "processed" / "fund_holdings.parquet"
@@ -155,6 +153,13 @@ def main() -> None:
         "fund holdings done",
         extra={"fields": {"months_per_scheme": months, "missing": sorted(set(names.values()) - set(months))}},
     )
+
+
+def main() -> None:
+    from app.utils.log import setup_logging
+
+    setup_logging(get_settings().log_level)
+    refresh()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 """Application settings, read from environment variables (and the repo-root .env locally).
 
-On AWS the same variables are set on the Lambda; secrets come from Secrets Manager (Phase 17).
+On AWS the same variables are set on each Lambda by Terraform (infrastructure/); secrets come from SSM
+Parameter Store (Phase 17).
 """
 
 from functools import lru_cache
@@ -22,6 +23,15 @@ class Settings(BaseSettings):
     config_dir: Path = REPO_ROOT / "config"
     cors_origins: list[str] = ["http://localhost:5173"]
     alphavantage_api_key: SecretStr | None = None
+
+    # AWS (Phase 14/15). Locally storage is "local": data_dir on disk, portfolios as JSON files.
+    # On Lambda storage is "s3": data is synced from s3_bucket into /tmp and portfolios live in DynamoDB.
+    storage: Literal["local", "s3"] = "local"
+    s3_bucket: str | None = None
+    ddb_table: str | None = None  # UserData table
+    event_bus: str | None = None  # custom EventBridge bus for pipeline events
+    news_queue_url: str | None = None
+    alerts_topic_arn: str | None = None
 
 
 @lru_cache

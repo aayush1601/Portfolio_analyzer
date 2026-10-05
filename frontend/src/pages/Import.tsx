@@ -213,7 +213,10 @@ export function ImportPage({ onImported }: { onImported: () => void }) {
   const [phonePid, setPhonePid] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch(`/api/import/session?port=${window.location.port || 80}`, { method: 'POST' })
+    const { protocol, origin, port } = window.location
+    // Deployed (https): the QR opens this same public site. Local: the server builds a LAN address instead.
+    const query = protocol === 'https:' ? `origin=${encodeURIComponent(origin)}` : `port=${port || 80}`
+    fetch(`/api/import/session?${query}`, { method: 'POST' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then(setSession)
       .catch((e: Error) => setSessionError(e.message))

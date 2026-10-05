@@ -5,6 +5,7 @@ Phase 14 swaps this for DynamoDB UserData (AP2/AP3) behind the same methods.
 
 import re
 import uuid
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -42,6 +43,15 @@ class PortfolioStore:
     def list(self, user: str) -> list[Portfolio]:
         ps = [Portfolio.model_validate_json(f.read_text()) for f in self._dir(user).glob("*.json")]
         return sorted(ps, key=lambda p: p.created_at)
+
+    def all(self) -> Iterator[tuple[str, Portfolio]]:
+        """Every (user, portfolio), for the scheduled pipeline jobs."""
+        for d in sorted(p for p in self.root.glob("*") if p.is_dir()):
+            for f in d.glob("*.json"):
+                yield d.name, Portfolio.model_validate_json(f.read_text())
+
+    def put_snapshot(self, user: str, sk: str, data: dict) -> None:
+        """Locally, risk snapshots and alerts are not persisted (DynamoDB only)."""
 
     def get(self, user: str, portfolio_id: str) -> Portfolio | None:
         f = self._dir(user) / f"{portfolio_id}.json"

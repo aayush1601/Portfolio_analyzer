@@ -114,11 +114,9 @@ def load_prices(data_dir: Path, since: date | None = None) -> pd.DataFrame:
     return read(data_dir / "processed" / "market" / "prices", "symbol", since)
 
 
-def main() -> None:
-    from app.utils.log import setup_logging
-
-    settings = get_settings()
-    setup_logging(settings.log_level)
+def refresh(settings=None):
+    """One run of this job; called by the CLI below and by the scheduled Lambda (app/aws/handlers.py)."""
+    settings = settings or get_settings()
     tickers = load_tickers(settings.config_dir)
     raw = download(list(tickers))
 
@@ -142,6 +140,14 @@ def main() -> None:
             }
         },
     )
+    return str(prices["date"].max().date())
+
+
+def main() -> None:
+    from app.utils.log import setup_logging
+
+    setup_logging(get_settings().log_level)
+    refresh()
 
 
 if __name__ == "__main__":

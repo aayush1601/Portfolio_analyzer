@@ -59,11 +59,9 @@ def load_navs(data_dir: Path, since: date | None = None) -> pd.DataFrame:
     return read(data_dir / "processed" / "nav", "scheme_code", since)
 
 
-def main() -> None:
-    from app.utils.log import setup_logging
-
-    settings = get_settings()
-    setup_logging(settings.log_level)
+def refresh(settings=None):
+    """One run of this job; called by the CLI below and by the scheduled Lambda (app/aws/handlers.py)."""
+    settings = settings or get_settings()
     codes = load_scheme_codes(settings.config_dir, settings.data_dir)
     with httpx.Client(timeout=30) as client:
         navs = collect(codes, client)
@@ -79,6 +77,13 @@ def main() -> None:
             }
         },
     )
+
+
+def main() -> None:
+    from app.utils.log import setup_logging
+
+    setup_logging(get_settings().log_level)
+    refresh()
 
 
 if __name__ == "__main__":

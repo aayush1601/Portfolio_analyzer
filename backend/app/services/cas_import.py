@@ -142,8 +142,42 @@ def register_funds(codes: list[str], data_dir: Path, client: httpx.Client) -> di
     return reg
 
 
-# ---------- phone hand-off tokens (in memory, short-lived) ----------
+# ---------- phone hand-off tokens (short-lived) ----------
+# Locally they live in memory. On AWS the laptop, the phone and the polling can each reach a different Lambda
+# container, so tokens live in the UserData table (PK = IMPORT#<token>, DynamoDB TTL on `expires`).
 _tokens: dict[str, dict] = {}
+
+
+def _table():
+    from app.config import get_settings
+
+    s = get_settings()
+    if s.storage != "s3":
+        return None
+    import boto3
+
+    return boto3.resource("dynamodb").Table(s.ddb_table)
+
+
+def _get(token: str) -> dict | None:
+    table = _table()
+    if table is None:
+        return _tokens.get(token)
+    item = table.get_item(Key={"PK": f"IMPORT#{token}", "SK": "TOKEN"}).get("Item")
+    return {"expires": float(item["expires"]), "portfolio_id": item.get("portfolio_id")} if item else None
+
+
+def _put(token: str, value: dict) -> None:
+    table = _table()
+    if table is None:
+        _tokens[token] = value
+        return
+    from decimal import Decimal
+
+    item = {"PK": f"IMPORT#{token}", "SK": "TOKEN", "expires": Decimal(int(value["expires"]))}
+    if value.get("portfolio_id"):
+        item["portfolio_id"] = value["portfolio_id"]
+    table.put_item(Item=item)
 
 
 def new_token() -> str:
@@ -151,20 +185,20 @@ def new_token() -> str:
     for t in [t for t, v in _tokens.items() if v["expires"] < now]:
         del _tokens[t]
     token = secrets.token_urlsafe(16)
-    _tokens[token] = {"expires": now + TOKEN_TTL_S, "portfolio_id": None}
+    _put(token, {"expires": now + TOKEN_TTL_S, "portfolio_id": None})
     return token
 
 
 def check_token(token: str | None) -> bool:
-    t = _tokens.get(token or "")
+    t = _get(token or "")
     return bool(t) and t["expires"] >= time.time()
 
 
 def complete_token(token: str, portfolio_id: str) -> None:
-    if token in _tokens:
-        _tokens[token]["portfolio_id"] = portfolio_id
+    if t := _get(token):
+        _put(token, {**t, "portfolio_id": portfolio_id})
 
 
 def token_result(token: str) -> str | None:
-    t = _tokens.get(token)
+    t = _get(token)
     return t["portfolio_id"] if t else None

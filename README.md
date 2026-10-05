@@ -19,6 +19,7 @@ Phase 9 (ML) done: point-in-time features, walk-forward ridge/RF/XGBoost vs base
 Phase 10 (optimiser) done: `GET /portfolio/{id}/optimize`, min-variance / balanced with look-through caps ([docs/algorithms/optimizer.md](docs/algorithms/optimizer.md)); shown on Insights.
 Phase 11 (full decision engine) done: recommendations blend news, risk, fit and the gap to the model allocation; optimiser-driven SWITCH and additions ([docs/algorithms/decision_engine.md](docs/algorithms/decision_engine.md)).
 Phase 12 (backtest & ablation) done: A–D layer ablation, buy-and-hold and NIFTY 50, costs, block-bootstrap Sharpe tests, regime split; Backtest page and [docs/backtest_report.md](docs/backtest_report.md).
+Phases 14–15 (AWS) built and validated: Terraform for API Gateway + Lambda, DynamoDB, S3, CloudFront, EventBridge Scheduler, SQS + DLQ, FinBERT container Lambda, SNS alerts and a budget alarm; deploy with `scripts/deploy.sh` ([docs/deployment.md](docs/deployment.md)).
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
