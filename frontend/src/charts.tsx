@@ -80,10 +80,19 @@ export function Dumbbell({
                   style={{ left: at(r.direct, max) }}
                 />
               )}
-              <div
-                className="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-direct bg-panel"
-                style={{ left: at(r.effective, max) }}
-              />
+              {via > 0.0005 ? (
+                <div className="absolute inset-y-0 [container-type:inline-size]" style={{ left: at(r.direct, max), width: at(via, max) }}>
+                  <div
+                    className="travel-x absolute top-1/2 left-full size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-direct bg-panel"
+                    style={{ animationDelay: `${i * 40 + 200}ms` }}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-direct bg-panel transition-[left] duration-300 ease-out"
+                  style={{ left: at(r.effective, max) }}
+                />
+              )}
             </Track>
             <span className={`num text-right text-[0.9rem] ${breach ? 'font-semibold text-alert' : ''}`}>
               {breach && <IconAlert className="mr-1 inline size-3.5 -translate-y-px" title="above cap" />}
@@ -250,7 +259,7 @@ export function TailHistogram({
     <figure role="img" aria-label={`Daily returns; ${tailDays} days fell below ${pct(cut)}`}>
       <div className="relative mb-1 h-10">
         <div
-          className={`absolute bottom-0 text-[0.8rem] leading-tight ${left < 50 ? 'pl-2 text-left' : 'pr-2 text-right'}`}
+          className={`absolute bottom-0 text-[0.8rem] leading-tight transition-[left,right] duration-300 ease-out ${left < 50 ? 'pl-2 text-left' : 'pr-2 text-right'}`}
           style={left < 50 ? { left: `${left}%` } : { right: `${100 - left}%` }}
         >
           <span className="block font-bold text-ink">1-in-{odds} bad day: {pct(cut)}</span>
@@ -266,17 +275,35 @@ export function TailHistogram({
             </pattern>
           </defs>
           {counts.map((c, i) => (
-            <rect
-              key={i}
-              x={xp(edges[i]) + 0.15}
-              y={100 - (c / top) * 100}
-              width={Math.max(0, xp(edges[i + 1]) - xp(edges[i]) - 0.3)}
-              height={(c / top) * 100}
-              fill={inTail(i) ? 'url(#tail)' : 'var(--color-direct)'}
-            />
+            inTail(i) ? (
+              // hatched tail bars keep real geometry so the pattern is never squashed
+              <rect
+                key={i}
+                x={xp(edges[i]) + 0.15}
+                y={100 - (c / top) * 100}
+                width={Math.max(0, xp(edges[i + 1]) - xp(edges[i]) - 0.3)}
+                height={(c / top) * 100}
+                fill="url(#tail)"
+              />
+            ) : (
+              <rect
+                key={i}
+                x={xp(edges[i]) + 0.15}
+                y={0}
+                width={Math.max(0, xp(edges[i + 1]) - xp(edges[i]) - 0.3)}
+                height={100}
+                fill="var(--color-direct)"
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'bottom',
+                  transform: `scaleY(${c / top})`,
+                  transition: 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              />
+            )
           ))}
         </svg>
-        <div className="absolute -top-2 bottom-0 border-l border-dashed border-ink" style={{ left: `${left}%` }} />
+        <div className="absolute -top-2 bottom-0 border-l border-dashed border-ink transition-[left] duration-300 ease-out" style={{ left: `${left}%` }} />
       </div>
       <div className="num relative h-5 border-t border-ink-3 text-[0.75rem] text-ink-3">
         <span className="absolute left-0 pt-0.5">{pct(lo)}</span>

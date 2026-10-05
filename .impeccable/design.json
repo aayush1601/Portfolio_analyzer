@@ -293,7 +293,32 @@
       {
         "name": "draw-x",
         "value": "scaleX(0) -> 1, 700ms cubic-bezier(0.16, 1, 0.3, 1), origin left; stagger 40ms per row, fund segment +200ms",
-        "purpose": "The single authored moment: chart marks draw from their zero line when data lands."
+        "purpose": "Chart marks draw from their zero line when data lands."
+      },
+      {
+        "name": "travel-x",
+        "value": "translateX(-100cqw) -> 0 inside the direct-to-effective container, 700ms cubic-bezier(0.16, 1, 0.3, 1), delay matches the via hatch",
+        "purpose": "Focal moment: the effective ring travels from the direct dot to the look-through value."
+      },
+      {
+        "name": "glide",
+        "value": "histogram scaleY 320ms; VaR line, label and score marker left 300ms ease-out",
+        "purpose": "Values change in place without jumping when the window or confidence changes."
+      },
+      {
+        "name": "re-rank",
+        "value": "View Transitions on table rows, 280ms cubic-bezier(0.16, 1, 0.3, 1); root not animated",
+        "purpose": "Rows slide to their new rank on sort."
+      },
+      {
+        "name": "strike",
+        "value": "2px ink-2 line scaleX 0 -> 1, 320ms, 450ms delay",
+        "purpose": "An action overridden by a cap is cancelled, not removed."
+      },
+      {
+        "name": "refetching",
+        "value": "opacity 0.55 (150ms) while a request is in flight, back to 1 (250ms)",
+        "purpose": "Stale data stays readable while it refreshes."
       },
       {
         "name": "color-transition",
@@ -302,8 +327,8 @@
       },
       {
         "name": "reduced-motion",
-        "value": "all animation and transition durations 1ms",
-        "purpose": "prefers-reduced-motion: reduce."
+        "value": "all animation and transition durations 1ms; re-rank transition skipped",
+        "purpose": "prefers-reduced-motion: reduce; dimming and strike still render."
       }
     ],
     "breakpoints": [
@@ -399,7 +424,7 @@
       "Navy / ochre-hatch / grey-hatch / vermilion as a fixed data legend across every chart.",
       "Tabular monospace figures with true minus signs and Indian digit grouping.",
       "One company, one name plate (symbol · sector · effective %), identical everywhere.",
-      "One authored motion: chart marks draw out from their zero line."
+      "One motion idea: values travel along their axis (marks draw from zero; changed values glide from where they were)."
     ],
     "rules": [
       {
@@ -447,7 +472,7 @@
       "**Don't** colour gains green and losses red; use sign plus drawn triangle in ink.",
       "**Don't** use KPI cards, donuts, gauges or shadows; the figures strip is ruled cells, not cards.",
       "**Don't** introduce a dark theme or terminal styling; this is projected in lit rooms and printed.",
-      "**Don't** add a second motion idea; marks draw from zero, nothing else moves.",
+      "**Don't** add a second motion idea: everything that moves is a value travelling along its axis; no fades-and-rises, hover lifts, parallax or loops.",
       "**Don't** use glyph or emoji icons; icons are authored inline SVG on a 16px grid with a 1.5 stroke."
     ]
   }

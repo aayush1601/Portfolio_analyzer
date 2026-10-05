@@ -39,7 +39,7 @@ function ScoreScale({ score, band }: { score: number; band: string }) {
             style={{ width: `${b.to - (bands[i - 1]?.to ?? 0)}%` }}
           />
         ))}
-        <div className="absolute -top-1.5 h-6 w-1 -translate-x-1/2 bg-ink ring-2 ring-panel" style={{ left: `${score}%` }} />
+        <div className="absolute -top-1.5 h-6 w-1 -translate-x-1/2 bg-ink ring-2 ring-panel transition-[left] duration-300 ease-out" style={{ left: `${score}%` }} />
       </div>
       <div className="mt-1 flex text-[0.75rem] text-ink-3">
         {bands.map((b, i) => (

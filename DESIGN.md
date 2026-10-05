@@ -123,7 +123,7 @@ The system refuses the KPI-card-and-donut admin dashboard, the trading terminal,
 - Navy / ochre-hatch / grey-hatch / vermilion as a fixed data legend across every chart.
 - Tabular monospace figures with true minus signs and Indian digit grouping.
 - One company, one name plate (symbol · sector · effective %), identical everywhere.
-- One authored motion: chart marks draw out from their zero line.
+- One motion idea: values travel along their axis (marks draw from zero; changed values glide from where they were).
 
 ## Colors
 
@@ -249,7 +249,14 @@ Action label in a 2px-bordered 2px-radius box, 0.8rem bold, 0.06em tracking: BUY
 Loading: Panel White with a 2px Rule top rule and a pulsing "Loading …" line in ink-3. Error: 2px Vermilion top rule, "Couldn't load …" in semibold ink, the message in ink-2, and a quiet "Try again" button. Alerts: Vermilion Wash band with a 2px vermilion top rule and the alert triangle.
 
 ### Motion
-One authored moment: chart marks draw out from their origin (`scaleX` 0 → 1, 700ms, cubic-bezier(0.16, 1, 0.3, 1)), staggered 40ms per row with the fund segment trailing by 200ms. Everything else is a plain colour transition. Reduced motion collapses all animation to 1ms.
+One idea, values travel along their axis, in five uses:
+- **Draw (`draw-x`):** chart marks draw out from their origin (`scaleX` 0 → 1, 700ms, cubic-bezier(0.16, 1, 0.3, 1)), staggered 40ms per row, fund segment trailing by 200ms.
+- **Look-through travel (`travel-x`, the focal moment):** the effective-exposure ring starts at the direct dot and travels with the ochre hatch to where you really are (`translateX(-100cqw)` → 0 inside a direct→effective container, 700ms, same curve and delay as the hatch).
+- **Glide:** when data changes in place (risk window, confidence), histogram bars rescale (`scaleY`, 320ms) and the VaR line, its label and the score marker slide (300ms ease-out). Hatched tail bars keep real geometry so the hatch never distorts.
+- **Re-rank:** sorting a table slides rows to their new place with View Transitions (280ms); the page itself does not fade. Instant where unsupported or under reduced motion.
+- **Strike:** an action a cap overrode is struck through by a line that draws across it (320ms, 450ms after the row), so it reads as cancelled, not removed.
+
+Feedback: a figure refetching keeps its previous data at 55% opacity (150ms out, 250ms back). Hover states are plain colour transitions. Reduced motion collapses every duration to 1ms and skips the re-rank transition; the dimming and the strike line still appear, so the state stays legible.
 
 ### Print
 Print forces a white ground and hides tabs and the "New portfolio" control; hatching and signs carry every encoding in greyscale.
@@ -270,5 +277,5 @@ Print forces a white ground and hides tabs and the "New portfolio" control; hatc
 - **Don't** colour gains green and losses red; use sign plus drawn triangle in ink.
 - **Don't** use KPI cards, donuts, gauges or shadows; the figures strip is ruled cells, not cards.
 - **Don't** introduce a dark theme or terminal styling; this is projected in lit rooms and printed.
-- **Don't** add a second motion idea; marks draw from zero, nothing else moves.
+- **Don't** add a second motion idea: everything that moves is a value travelling along its axis; no fades-and-rises, hover lifts, parallax or loops.
 - **Don't** use glyph or emoji icons; icons are authored inline SVG on a 16px grid with a 1.5 stroke.

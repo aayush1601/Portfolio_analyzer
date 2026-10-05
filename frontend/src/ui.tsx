@@ -1,4 +1,5 @@
 import { useContext, useMemo, useState, type ReactNode } from 'react'
+import { flushSync } from 'react-dom'
 import type { Loadable } from './api'
 import { pct } from './format'
 import { PlateContext } from './plates'
@@ -138,10 +139,22 @@ export function Status<T>({ q, what, children }: { q: Loadable<T>; what: string;
         <span>Loading {what}…</span>
       </div>
     )
-  return <>{children(q.data)}</>
+  return (
+    <div className={`min-w-0 ${q.loading ? 'refetching' : 'settled'}`} aria-busy={q.loading}>
+      {children(q.data)}
+    </div>
+  )
 }
 
 // ---------- sortable table ----------
+const slug = (s: string) => s.replace(/[^a-zA-Z0-9_-]+/g, '_')
+
+/** Re-sort with rows sliding to their new place where View Transitions exist; instant otherwise. */
+function reorder(update: () => void) {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!document.startViewTransition || reduce) return update()
+  document.startViewTransition(() => flushSync(update))
+}
 export type Column<T> = {
   key: string
   label: ReactNode
@@ -167,6 +180,7 @@ export function Table<T>({
   caption: string
 }) {
   const [sort, setSort] = useState(initialSort)
+  const vtPrefix = `row-${slug(caption)}`
   const sorted = useMemo(() => {
     const col = columns.find((c) => c.key === sort?.key)
     if (!col?.sort || !sort) return rows
@@ -196,7 +210,7 @@ export function Table<T>({
                     <button
                       className={`inline-flex items-center gap-1 hover:text-ink ${active ? 'text-ink' : ''}`}
                       onClick={() =>
-                        setSort({ key: c.key, dir: active && sort!.dir === 'desc' ? 'asc' : 'desc' })
+                        reorder(() => setSort({ key: c.key, dir: active && sort!.dir === 'desc' ? 'asc' : 'desc' }))
                       }
                     >
                       {c.label}
@@ -214,7 +228,11 @@ export function Table<T>({
         </thead>
         <tbody>
           {sorted.map((r) => (
-            <tr key={rowKey(r)} className={`border-b border-rule-soft align-top hover:bg-ground/60 ${rowClass?.(r) ?? ''}`}>
+            <tr
+              key={rowKey(r)}
+              className={`border-b border-rule-soft align-top hover:bg-ground/60 ${rowClass?.(r) ?? ''}`}
+              style={{ viewTransitionName: `${vtPrefix}-${slug(rowKey(r))}` }}
+            >
               {columns.map((c) => (
                 <td
                   key={c.key}

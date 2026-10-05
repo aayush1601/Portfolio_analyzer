@@ -84,7 +84,9 @@ button {
   text-wrap: balance;
 }
 
-/* One authored moment: chart marks draw out from their origin when data lands. */
+/* One motion idea: values travel along their axis. Marks draw out from zero when data lands; the
+   look-through ring travels from what you hold directly to what you really carry; changed values glide
+   from where they were; a blocked action is struck through, not removed. */
 @keyframes grow-x {
   from {
     transform: scaleX(0);
@@ -93,6 +95,41 @@ button {
 .draw-x {
   transform-origin: left center;
   animation: grow-x 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* The ring sits at the far end of its direct→effective container and starts the trip at the direct dot. */
+@keyframes travel-x {
+  from {
+    transform: translateX(-100cqw);
+  }
+}
+.travel-x {
+  animation: travel-x 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.strike-draw {
+  transform-origin: left center;
+  animation: grow-x 320ms cubic-bezier(0.16, 1, 0.3, 1) 450ms both;
+}
+
+/* Stale data stays readable while a refetch is in flight; only its emphasis drops. */
+.refetching {
+  opacity: 0.55;
+  transition: opacity 150ms ease-out;
+}
+.settled {
+  opacity: 1;
+  transition: opacity 250ms ease-out;
+}
+
+/* Re-ranking a table: rows slide to their new place (View Transitions); the page itself does not fade. */
+::view-transition-group(*) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
 }
 
 @media print {

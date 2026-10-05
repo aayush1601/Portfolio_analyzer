@@ -80,8 +80,10 @@ export function Actions({ pid, reference }: { pid: string; reference: Reference 
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {i.blocked_action && (
-                        <span className="rounded-[2px] border-2 border-transparent px-1 py-0.5 text-[0.8rem] font-bold tracking-[0.06em] text-ink-2 line-through decoration-2" title="What the scores proposed before a cap overrode it">
+                        <span className="relative rounded-[2px] border-2 border-transparent px-1 py-0.5 text-[0.8rem] font-bold tracking-[0.06em] text-ink-2" title="What the scores proposed before a cap overrode it">
                           {i.blocked_action}
+                          <span className="sr-only"> (overridden)</span>
+                          <span aria-hidden className="strike-draw absolute inset-x-0.5 top-1/2 h-[2px] -translate-y-1/2 bg-ink-2" />
                         </span>
                       )}
                       <Stamp action={i.action} />
@@ -105,10 +107,13 @@ export function Actions({ pid, reference }: { pid: string; reference: Reference 
                   <dl className="grid grid-cols-[9.5rem_1fr] items-center gap-x-3 gap-y-1.5 text-[0.85rem]">
                     {COMPONENTS.map(([k, label]) => (
                       <div key={k} className="contents">
-                        <dt className="text-ink-2">{label}</dt>
+                        <dt className="text-ink-2">
+                          {label}
+                          {r.weights[k] === 0 && <span className="block text-[0.75rem] text-ink-3">not weighted</span>}
+                        </dt>
                         <dd>
                           {k === 'expected_return' && i.components[k] === null ? (
-                            <span className="text-ink-3">arrives with the ML model</span>
+                            <span className="text-ink-3">{i.asset_type === 'MF' ? 'stocks only' : 'run the ML model'}</span>
                           ) : (
                             <ScoreBar value={i.components[k] ?? null} />
                           )}
