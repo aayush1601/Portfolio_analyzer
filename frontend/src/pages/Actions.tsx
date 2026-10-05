@@ -1,13 +1,14 @@
 import { ScoreBar } from '../charts'
 import { AllocationCard } from './Allocation'
 import { useApi, type Recommendation, type Reference, type Recommendations } from '../api'
-import { fixed } from '../format'
+import { fixed, inr, pct } from '../format'
 import { Avatar, Card, IconAlert, Notes, Plate, Status } from '../ui'
 
 const COMPONENTS: [string, string][] = [
   ['news', 'News'],
   ['risk', 'Risk (higher = calmer)'],
   ['portfolio_fit', 'Portfolio fit'],
+  ['allocation', 'Model allocation'],
   ['expected_return', 'Expected return'],
 ]
 const RULE: Record<string, string> = { max_company_exposure: 'Single-company cap', max_sector_exposure: 'Sector cap' }
@@ -128,10 +129,10 @@ export function Actions({ pid, reference }: { pid: string; reference: Reference 
           <AllocationCard pid={pid} reference={reference} />
           <Card
             title={`Of ${r.items.length} holdings: ${summary(r)}`}
-            dek="Each score blends news, risk and how well the holding fits the portfolio, 0–100 (higher favours keeping or adding). Look-through caps can only make an insight more cautious; when one does, the original call stays visible."
+            dek="Each score blends news, risk, how well the holding fits the portfolio and how far it sits from the model allocation, 0–100 (higher favours keeping or adding). Look-through caps can only make an insight more cautious; when one does, the original call stays visible."
             source={
               <>
-                Rules version {r.config_version}: ≥ 65 add, ≤ 35 reduce, caps 15% per company and 25% per sector on effective exposure.
+                Rules version {r.config_version}; model allocation goal: {r.allocation_objective === 'balanced' ? 'balanced' : 'lowest risk'}. ≥ 65 add, ≤ 35 reduce, caps 15% per company and 25% per sector on effective exposure.
                 {r.notes.length > 0 && (
                   <span className="mt-1 block">
                     <Notes notes={r.notes} />
@@ -146,6 +147,33 @@ export function Actions({ pid, reference }: { pid: string; reference: Reference 
               ))}
             </ol>
           </Card>
+          {r.additions.length > 0 && (
+            <Card
+              title={`${r.additions.length} holding${r.additions.length === 1 ? '' : 's'} you don’t own that the model allocation would add`}
+              dek="Where the money from the reductions above would go in the model allocation. Each keeps every look-through cap. Research output, not a recommendation to buy."
+            >
+              <ul className="-mx-5 divide-y divide-line-soft border-t border-line sm:-mx-6">
+                {r.additions.map((a) => {
+                  const label = a.asset_type === 'MF' ? fundName(a.asset_id) : a.asset_id
+                  return (
+                    <li key={a.asset_id} className="flex flex-wrap items-center gap-3 px-5 py-3 sm:px-6">
+                      <Avatar id={a.asset_id} label={label} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-ink">
+                          {label} <span className="text-[0.8rem] font-medium text-ink-3">{a.asset_type === 'MF' ? 'Mutual fund' : 'Stock'}</span>
+                        </p>
+                        <p className="text-[0.82rem] text-ink-2">{a.reasons.join(' · ')}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="num font-bold text-brand-ink">{pct(a.target)}</p>
+                        <p className="num text-[0.78rem] text-ink-3">about {inr(a.amount_inr)}</p>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          )}
         </div>
       )}
     </Status>

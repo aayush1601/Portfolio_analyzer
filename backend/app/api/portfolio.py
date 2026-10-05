@@ -237,10 +237,23 @@ def get_allocation(
 ) -> AllocationReport:
     """Model allocation over the universe plus held funds, with caps on look-through exposure (Phase 10)."""
     p = owned(store, user, portfolio_id)
+    prices, navs = load_market(allocation_since())
+    try:
+        return allocation_for(p, snapshot(p, prices, navs), prices, navs, objective)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
+
+
+def allocation_since() -> date:
+    return date.today() - timedelta(days=int(read_config("optimizer.yaml")["lookback_days"] * 1.5) + 30)
+
+
+def allocation_for(
+    p: Portfolio, snap: PortfolioSnapshot, prices: pd.DataFrame, navs: pd.DataFrame, objective: str
+) -> AllocationReport:
+    """Raises ValueError when no allocation can satisfy every cap."""
     cfg = read_config("optimizer.yaml")
     caps = read_config("recommendations.yaml")["caps"]
-    prices, navs = load_market(date.today() - timedelta(days=int(cfg["lookback_days"] * 1.5) + 30))
-    snap = snapshot(p, prices, navs)
     u = read_config("universe.yaml")
     sector_of = {s["symbol"]: s["sector"] for s in u["stocks"]}
     held = {h.asset_id: h for h in snap.holdings if h.asset_type is not AssetType.CASH}
@@ -264,19 +277,16 @@ def get_allocation(
             f"{len(unknown)} funds have no holdings disclosure yet, so the caps can't see inside them"
         )
     mode = cfg["objectives"][objective]
-    try:
-        w, binding = optimize(
-            mu,
-            Sigma,
-            H,
-            sector_of,
-            risk_aversion=mode["risk_aversion"],
-            max_asset=cfg["max_asset_weight"],
-            cash_floor=cfg["cash_floor"],
-            caps=caps,
-        )
-    except ValueError as e:
-        raise HTTPException(422, str(e)) from e
+    w, binding = optimize(
+        mu,
+        Sigma,
+        H,
+        sector_of,
+        risk_aversion=mode["risk_aversion"],
+        max_asset=cfg["max_asset_weight"],
+        cash_floor=cfg["cash_floor"],
+        caps=caps,
+    )
 
     w0 = pd.Series({a: held[a].weight for a in keep if a in held}).reindex(keep, fill_value=0.0)
     cash0 = sum(h.weight for h in snap.holdings if h.asset_type is AssetType.CASH)
@@ -321,9 +331,14 @@ def get_allocation(
 @router.get("/{portfolio_id}/recommendations")
 def get_recommendations(portfolio_id: PortfolioId, user: User, store: Store) -> RecommendationReport:
     p = owned(store, user, portfolio_id)
-    prices, navs = load_market(date.today() - timedelta(days=420))
+    prices, navs = load_market(min(allocation_since(), date.today() - timedelta(days=420)))
     snap = snapshot(p, prices, navs)
     u = read_config("universe.yaml")
+    cfg = read_config("recommendations.yaml")
+    try:
+        allocation = allocation_for(p, snap, prices, navs, cfg["allocation_objective"])
+    except ValueError:
+        allocation = None  # recommendations still work from the other components
     sent = ticker_sentiment(
         scored_news(), datetime.now(UTC), read_config("news_sources.yaml")["recency_half_life_hours"]
     )
@@ -334,8 +349,9 @@ def get_recommendations(portfolio_id: PortfolioId, user: User, store: Store) -> 
         asset_returns(prices, navs),
         sent,
         u["mutual_funds"],
-        read_config("recommendations.yaml"),
+        cfg,
         load_predictions(),
+        allocation,
     )
 
 

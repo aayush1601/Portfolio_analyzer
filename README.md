@@ -17,6 +17,7 @@ Phase 11 basic (recommendations) done: `GET /portfolio/{id}/recommendations`, BU
 Phase 13 MVP pages: Look-through (default), Holdings, Risk + stress test, News, Actions at http://localhost:5173 (visual direction: `.impeccable/surfaces/`).
 Phase 9 (ML) done: point-in-time features, walk-forward ridge/RF/XGBoost vs baseline, SHAP; see the model card.
 Phase 10 (optimiser) done: `GET /portfolio/{id}/optimize`, min-variance / balanced with look-through caps ([docs/algorithms/optimizer.md](docs/algorithms/optimizer.md)); shown on Insights.
+Phase 11 (full decision engine) done: recommendations blend news, risk, fit and the gap to the model allocation; optimiser-driven SWITCH and additions ([docs/algorithms/decision_engine.md](docs/algorithms/decision_engine.md)).
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)

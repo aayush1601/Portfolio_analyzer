@@ -139,6 +139,8 @@ export type Recommendations = {
   config_version: string
   weights: Record<string, number>
   items: Recommendation[]
+  additions: { asset_id: string; asset_type: AssetType; target: number; amount_inr: number; reasons: string[] }[]
+  allocation_objective: string | null
   notes: string[]
 }
 

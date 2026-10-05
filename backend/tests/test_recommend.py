@@ -148,3 +148,70 @@ def test_model_prediction_is_shown_but_not_weighted():
     assert any("20-day return (up)" in x for x in r.reasons)
     assert r.final_score == without.items[0].final_score  # weight 0: information only
     assert "information only" in with_model.notes[0]
+
+
+def allocation(items, objective="min_variance"):
+    from app.models.allocation import AllocationItem, AllocationReport, Stats
+
+    rows = [
+        AllocationItem(
+            asset_id=a, asset_type=t, current=c, target=g, change=g - c, change_inr=(g - c) * 100_000
+        )
+        for a, t, c, g in items
+    ]
+    return AllocationReport(
+        portfolio_id="p", as_of=date(2026, 10, 1), objective=objective, config_version="t",
+        current=Stats(expected_return=0, volatility=0.1), target=Stats(expected_return=0, volatility=0.08),
+        cash_current=0.0, cash_target=0.05, items=rows, sectors=[], binding=[], turnover=0.1, notes=[],
+    )  # fmt: skip
+
+
+CFG_FULL = {
+    **CFG,
+    "weights": {
+        "expected_return": 0.0,
+        "news": 0.20,
+        "risk": 0.20,
+        "portfolio_fit": 0.25,
+        "allocation": 0.35,
+    },
+    "allocation_gap_scale": 0.10,
+    "add_min_target": 0.03,
+}
+
+
+def run_full(weights, alloc, holdings=NO_HOLDINGS, funds_meta=()):
+    s = snap(weights)
+    direct = {a: w for a, (t, w) in weights.items() if t == "STOCK"}
+    funds = {a: w for a, (t, w) in weights.items() if t == "MF"}
+    exp = effective_exposure("p", s.as_of, direct, funds, holdings, SECTORS)
+    sent = pd.DataFrame(columns=["symbol", "articles", "weight", "decayed_score"])
+    return recommend(s, exp, holdings, pd.DataFrame(), sent, list(funds_meta), CFG_FULL, None, alloc)
+
+
+def test_allocation_gap_enters_the_score():
+    r = run_full({"ITC": ("STOCK", 0.05), "INR": ("CASH", 0.95)}, allocation([("ITC", "STOCK", 0.05, 0.0)]))
+    i = r.items[0]
+    # gap −0.05 / scale 0.10 → 50 − 25 = 25; news 50 (no news); fit 66.67; no risk data
+    assert i.components["allocation"] == 25
+    # (0.20·50 + 0.25·66.67 + 0.35·25) / 0.80 = 44.27
+    assert i.final_score == pytest.approx(44.3, abs=0.05)
+    assert any("Model allocation (lowest-risk): 0.0% target vs 5.0% now" in x for x in i.reasons)
+
+
+def test_model_allocation_switches_a_dropped_fund_to_a_same_category_peer():
+    meta = [{"scheme_code": f, "category": "Large Cap"} for f in ("F1", "F3")]
+    alloc = allocation([("F1", "MF", 1.0, 0.0), ("F3", "MF", 0.0, 0.2)])
+    i = run_full({"F1": ("MF", 1.0)}, alloc, funds_meta=meta).items[0]
+    assert (i.action, i.switch_to) == ("SWITCH", "F3")
+    assert any("moves this money into F3" in x for x in i.reasons)
+
+
+def test_unheld_model_picks_are_listed_as_additions():
+    alloc = allocation(
+        [("ITC", "STOCK", 0.05, 0.05), ("TCS", "STOCK", 0.0, 0.06), ("INFY", "STOCK", 0.0, 0.02)]
+    )
+    r = run_full({"ITC": ("STOCK", 0.05), "INR": ("CASH", 0.95)}, alloc)
+    assert [a.asset_id for a in r.additions] == ["TCS"]  # INFY's 2% is under the 3% bar
+    assert r.additions[0].amount_inr == pytest.approx(6_000)
+    assert r.allocation_objective == "min_variance"

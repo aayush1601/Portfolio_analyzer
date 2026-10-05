@@ -18,6 +18,16 @@ class Recommendation(BaseModel):
     shap_top: list[dict] = []  # model drivers behind expected_return: feature, value, shap
 
 
+class Addition(BaseModel):
+    """An asset you don't hold that the model allocation includes. Research output, not a trade."""
+
+    asset_id: str
+    asset_type: str
+    target: float
+    amount_inr: float
+    reasons: list[str]
+
+
 class RecommendationReport(BaseModel):
     portfolio_id: str
     as_of: datetime
@@ -25,4 +35,6 @@ class RecommendationReport(BaseModel):
     config_version: str
     weights: dict[str, float]  # component weights used for final_score (0 = shown for information only)
     items: list[Recommendation]
+    additions: list[Addition] = []
+    allocation_objective: str | None = None
     notes: list[str]

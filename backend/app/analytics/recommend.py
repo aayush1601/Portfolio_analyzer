@@ -12,9 +12,10 @@ import pandas as pd
 from app.analytics.exposure import UNMAPPED, fund_overlap
 from app.analytics.features import FEATURE_LABELS
 from app.analytics.risk import TRADING_DAYS, score_component
+from app.models.allocation import AllocationReport
 from app.models.exposure import ExposureReport
 from app.models.portfolio import AssetType, PortfolioSnapshot
-from app.models.recommendation import Recommendation, RecommendationReport
+from app.models.recommendation import Addition, Recommendation, RecommendationReport
 
 
 def shrunk_sentiment(sent: pd.DataFrame, k: float) -> dict[str, tuple[float, int]]:
@@ -48,6 +49,7 @@ def recommend(
     funds_meta: list[dict],
     cfg: dict,
     predictions: pd.DataFrame | None = None,
+    allocation: AllocationReport | None = None,
 ) -> RecommendationReport:
     """holdings: latest disclosures for all universe funds; R: asset returns; sent: ticker_sentiment(...)."""
     caps, th = cfg["caps"], cfg["thresholds"]
@@ -65,6 +67,10 @@ def recommend(
     if predictions is not None and len(predictions):
         p20 = predictions[predictions["horizon"] == 20]
         model = {r.symbol: (r.pct, json.loads(r.shap_top)) for r in p20.itertuples()}
+
+    # Phase 10 model allocation: target per asset. An asset missing from it was kept out of the optimisation.
+    targets = {i.asset_id: i for i in allocation.items} if allocation else {}
+    goal = "lowest-risk" if allocation and allocation.objective == "min_variance" else "balanced"
 
     def max_overlap(f: str, others: list[str]) -> tuple[float, str | None]:
         pairs = [
@@ -118,8 +124,15 @@ def recommend(
             elif with_fund:
                 reasons.append(f"Overlaps {ov:.0%} with fund {with_fund}")
 
+        t = targets.get(a)
+        comp["allocation"] = None
+        if t is not None:
+            gap = t.target - t.current
+            comp["allocation"] = 50 + 50 * float(np.clip(gap / cfg["allocation_gap_scale"], -1, 1))
+            reasons.append(f"Model allocation ({goal}): {t.target:.1%} target vs {t.current:.1%} now")
+
         w = cfg["weights"]
-        avail = {k: c for k, c in comp.items() if c is not None and w[k] > 0}
+        avail = {k: c for k, c in comp.items() if c is not None and w.get(k, 0) > 0}
         final = sum(w[k] * c for k, c in avail.items()) / sum(w[k] for k in avail) if avail else 50.0
         up = "BUY" if h.asset_type is AssetType.STOCK else "INCREASE"
         action = up if final >= th["buy"] else "REDUCE" if final <= th["reduce"] else "HOLD"
@@ -155,8 +168,24 @@ def recommend(
                 action = "HOLD"
                 constraints += breached
                 reasons.append("Adding would raise exposure that is already at a cap")
+            # The model allocation drops this fund but holds a fund of the same category: switch to that one.
+            peers = [
+                i
+                for i in targets.values()
+                if i.asset_type == "MF"
+                and i.current == 0
+                and i.target > 0
+                and category.get(i.asset_id) == category.get(a)
+            ]
+            if t is not None and t.target == 0 and category.get(a) and peers:
+                best_peer = max(peers, key=lambda i: i.target)
+                action, switch_to = "SWITCH", best_peer.asset_id
+                reasons.append(
+                    f"The {goal} model allocation moves this money into {best_peer.asset_id}, "
+                    f"a {category[a]} fund it gives {best_peer.target:.1%}"
+                )
             # Of two heavily overlapping funds, switch the smaller holding and keep the larger.
-            if ov >= cfg["switch_overlap"] and (weight[with_fund], with_fund) > (h.weight, a):
+            elif ov >= cfg["switch_overlap"] and (weight[with_fund], with_fund) > (h.weight, a):
                 others = [f for f in held_funds if f != a]
                 candidates = [
                     (max_overlap(c, others)[0], c)
@@ -184,6 +213,24 @@ def recommend(
                 shap_top=drivers,
             )
         )
+    additions = [
+        Addition(
+            asset_id=i.asset_id,
+            asset_type=i.asset_type,
+            target=i.target,
+            amount_inr=i.change_inr,
+            reasons=[
+                f"The {goal} model allocation gives it {i.target:.1%}, within every look-through cap",
+                *(
+                    [f"Volatility {vol[i.asset_id]:.0%} (1y, annualised)"]
+                    if i.asset_id in vol and not pd.isna(vol[i.asset_id])
+                    else []
+                ),
+            ],
+        )
+        for i in sorted(targets.values(), key=lambda i: -i.target)
+        if i.current == 0 and i.target >= cfg["add_min_target"]
+    ]
     w = cfg["weights"]
     notes = []
     if w["expected_return"] == 0:
@@ -200,5 +247,7 @@ def recommend(
         config_version=cfg["version"],
         weights=cfg["weights"],
         items=sorted(items, key=lambda i: i.final_score),
+        additions=additions,
+        allocation_objective=allocation.objective if allocation else None,
         notes=notes + exp.notes,
     )

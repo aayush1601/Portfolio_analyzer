@@ -1,13 +1,17 @@
 # Recommendation engine (FR7). Design assumptions, to be tuned in the backtest/ablation, not ground truth.
 # Bump `version` whenever anything changes; it is returned with every recommendation.
-version: v1-basic
+version: v2
 disclaimer: Hypothetical, for research; not financial advice.
 
 # Component scores are 0-100, higher = more attractive to hold or add. final_score is their weighted mean
-# over the components that exist. expected_return has no weight until the Phase 9 model exists.
+# over the components that exist. allocation (Phase 11 full) scores the gap to the Phase 10 model allocation:
+# 50 at target, 100 when the model wants `allocation_gap_scale` more, 0 when it wants that much less.
 # expected_return stays at 0 until the Phase 9 model shows significant out-of-sample skill (docs/model_card.md);
 # it is still computed and shown, with its SHAP drivers.
-weights: { expected_return: 0.0, news: 0.35, risk: 0.30, portfolio_fit: 0.35 }
+weights: { expected_return: 0.0, news: 0.20, risk: 0.20, portfolio_fit: 0.25, allocation: 0.35 }
+allocation_objective: min_variance  # which Phase 10 allocation drives the allocation score
+allocation_gap_scale: 0.10
+add_min_target: 0.03  # unheld assets the model gives at least this weight are listed as worth considering
 thresholds: { buy: 65, reduce: 35 }  # ≥ buy → BUY/INCREASE, ≤ reduce → REDUCE, else HOLD
 # BUY/INCREASE needs at least this many scored components; with less evidence the action is capped at HOLD.
 min_components_to_add: 2
