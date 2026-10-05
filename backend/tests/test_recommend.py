@@ -121,3 +121,30 @@ def test_fund_without_disclosure_says_so():
     assert r.components["news"] is None and r.components["portfolio_fit"] is None
     assert r.final_score == 50 and r.action == "HOLD"
     assert "No holdings disclosure" in r.reasons[0]
+
+
+def test_model_prediction_is_shown_but_not_weighted():
+    import json
+
+    preds = pd.DataFrame(
+        [
+            {
+                "symbol": "ITC",
+                "horizon": 20,
+                "pct": 0.9,
+                "shap_top": json.dumps([{"feature": "ret_20d", "value": 0.05, "shap": 0.01}]),
+            },
+            {"symbol": "ITC", "horizon": 5, "pct": 0.1, "shap_top": "[]"},
+        ]
+    )
+    s = snap({"ITC": ("STOCK", 0.05), "INR": ("CASH", 0.95)})
+    exp = effective_exposure("p", s.as_of, {"ITC": 0.05}, {}, NO_HOLDINGS, SECTORS)
+    empty = pd.DataFrame(columns=["symbol", "articles", "weight", "decayed_score"])
+    with_model = recommend(s, exp, NO_HOLDINGS, pd.DataFrame(), empty, [], CFG, preds)
+    without = recommend(s, exp, NO_HOLDINGS, pd.DataFrame(), empty, [], CFG)
+    r = with_model.items[0]
+    assert r.components["expected_return"] == 90  # 20-day horizon percentile
+    assert r.shap_top[0]["feature"] == "ret_20d"
+    assert any("20-day return (up)" in x for x in r.reasons)
+    assert r.final_score == without.items[0].final_score  # weight 0: information only
+    assert "information only" in with_model.notes[0]

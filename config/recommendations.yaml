@@ -5,6 +5,8 @@ disclaimer: Hypothetical, for research; not financial advice.
 
 # Component scores are 0-100, higher = more attractive to hold or add. final_score is their weighted mean
 # over the components that exist. expected_return has no weight until the Phase 9 model exists.
+# expected_return stays at 0 until the Phase 9 model shows significant out-of-sample skill (docs/model_card.md);
+# it is still computed and shown, with its SHAP drivers.
 weights: { expected_return: 0.0, news: 0.35, risk: 0.30, portfolio_fit: 0.35 }
 thresholds: { buy: 65, reduce: 35 }  # ≥ buy → BUY/INCREASE, ≤ reduce → REDUCE, else HOLD
 # BUY/INCREASE needs at least this many scored components; with less evidence the action is capped at HOLD.

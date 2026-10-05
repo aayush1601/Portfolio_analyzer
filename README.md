@@ -15,6 +15,7 @@ Phase 7 (FinBERT sentiment) done: per-headline scores, time-decayed per-ticker a
 Phase 8 (news → portfolio impact) done: `GET /portfolio/{id}/news`, exposure-weighted impact with alert flag (`impact` in config/news_sources.yaml).
 Phase 11 basic (recommendations) done: `GET /portfolio/{id}/recommendations`, BUY/HOLD/REDUCE and INCREASE/HOLD/REDUCE/SWITCH with reasons and look-through safety caps ([config/recommendations.yaml](config/recommendations.yaml)). **MVP backend complete.**
 Phase 13 MVP pages: Look-through (default), Holdings, Risk + stress test, News, Actions at http://localhost:5173 (visual direction: `.impeccable/surfaces/`).
+Phase 9 (ML) done: point-in-time features, walk-forward ridge/RF/XGBoost vs baseline, SHAP; see the model card.
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -63,6 +64,13 @@ In code: `load_prices(settings.data_dir)` for PriceBar rows, `returns(prices)` f
 `POST/GET /portfolio`, `GET /portfolio/{id}` (valuation, weights, P/L), `PUT /portfolio/{id}/holdings`; see the API docs at http://localhost:8000/docs.
 Local auth stub: every request is user `local`, stored as JSON in `data/portfolios/local/`. A new user starts with the
 demo portfolios in [config/demo_portfolios.yaml](config/demo_portfolios.yaml). Holdings must be in the research universe.
+
+## Expected-return models (Phase 9)
+```bash
+cd backend && uv run --group ml python -m app.services.ml   # ~2 min: walk-forward eval, final XGBoost, SHAP, model card
+```
+Results and limitations: [docs/model_card.md](docs/model_card.md). Recommendations show the model's rank and drivers;
+its weight stays 0 in `config/recommendations.yaml` until it shows significant out-of-sample skill.
 
 ## Sentiment (Phase 7)
 Needs the `ml` group (torch + transformers; ~440 MB model on first run, cached by Hugging Face):

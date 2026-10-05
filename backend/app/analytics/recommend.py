@@ -4,10 +4,13 @@ Each held asset gets 0-100 component scores (higher = more attractive), a weight
 thresholds, then safety rules on look-through exposure that can only make the action more cautious.
 """
 
+import json
+
 import numpy as np
 import pandas as pd
 
 from app.analytics.exposure import UNMAPPED, fund_overlap
+from app.analytics.features import FEATURE_LABELS
 from app.analytics.risk import TRADING_DAYS, score_component
 from app.models.exposure import ExposureReport
 from app.models.portfolio import AssetType, PortfolioSnapshot
@@ -44,6 +47,7 @@ def recommend(
     sent: pd.DataFrame,
     funds_meta: list[dict],
     cfg: dict,
+    predictions: pd.DataFrame | None = None,
 ) -> RecommendationReport:
     """holdings: latest disclosures for all universe funds; R: asset returns; sent: ticker_sentiment(...)."""
     caps, th = cfg["caps"], cfg["thresholds"]
@@ -56,6 +60,11 @@ def recommend(
     category = {str(f["scheme_code"]): f["category"] for f in funds_meta}
     vol = R.tail(TRADING_DAYS).std() * np.sqrt(TRADING_DAYS)
     weight = {h.asset_id: h.weight for h in snap.holdings}
+    # Phase 9 model output for the 20-day horizon: percentile rank and SHAP drivers per stock.
+    model = {}
+    if predictions is not None and len(predictions):
+        p20 = predictions[predictions["horizon"] == 20]
+        model = {r.symbol: (r.pct, json.loads(r.shap_top)) for r in p20.itertuples()}
 
     def max_overlap(f: str, others: list[str]) -> tuple[float, str | None]:
         pairs = [
@@ -69,6 +78,18 @@ def recommend(
             continue
         a, reasons, constraints, switch_to = h.asset_id, [], [], None
         comp: dict[str, float | None] = {"expected_return": None}
+        drivers: list[dict] = []
+        if h.asset_type is AssetType.STOCK and a in model:
+            pct_rank, drivers = model[a]
+            comp["expected_return"] = 100 * pct_rank
+            why = ", ".join(
+                f"{FEATURE_LABELS.get(d['feature'], d['feature'])} ({'up' if d['shap'] > 0 else 'down'})"
+                for d in drivers
+            )
+            reasons.append(
+                f"Model ranks it above {pct_rank:.0%} of NIFTY 50 stocks for 20-day excess return; "
+                f"drivers: {why}"
+            )
 
         v = vol.get(a)
         comp["risk"] = None if v is None or pd.isna(v) else 100 - score_component(v, **cfg["risk_volatility"])
@@ -160,14 +181,24 @@ def recommend(
                 constraints_triggered=constraints,
                 switch_to=switch_to,
                 blocked_action=proposed if action not in (proposed, "SWITCH") else None,
+                shap_top=drivers,
             )
         )
-    notes = ["expected_return arrives with the Phase 9 model; final_score uses news, risk and portfolio fit"]
+    w = cfg["weights"]
+    notes = []
+    if w["expected_return"] == 0:
+        notes.append(
+            "expected_return is shown for information only (weight 0): the Phase 9 model has no "
+            "statistically significant skill yet (see docs/model_card.md)"
+            if model
+            else "expected_return needs the Phase 9 model: run app.services.ml"
+        )
     return RecommendationReport(
         portfolio_id=snap.portfolio_id,
         as_of=pd.Timestamp.now(tz="UTC").to_pydatetime(),
         disclaimer=cfg["disclaimer"],
         config_version=cfg["version"],
+        weights=cfg["weights"],
         items=sorted(items, key=lambda i: i.final_score),
         notes=notes + exp.notes,
     )

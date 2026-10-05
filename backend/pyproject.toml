@@ -20,8 +20,12 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
 ml = [
+    "scikit-learn>=1.9.1",
+    "scipy>=1.18.1",
+    "shap>=0.52.0",
     "torch>=2.14.1",
     "transformers>=5.18.0",
+    "xgboost>=3.4.1",
 ]
 # Phase 0 feasibility spike only (yfinance/pandas became main deps in Phase 2).
 spikes = ["requests>=2.32"]
@@ -43,3 +47,4 @@ ignore = ["S101"]  # assert is fine in tests
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S"]
+"app/services/ml.py" = ["E501"]  # markdown model-card template

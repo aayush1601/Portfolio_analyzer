@@ -113,11 +113,13 @@ export type Recommendation = {
   constraints_triggered: string[]
   switch_to: string | null
   blocked_action: string | null
+  shap_top: { feature: string; value: number; shap: number }[]
 }
 export type Recommendations = {
   as_of: string
   disclaimer: string
   config_version: string
+  weights: Record<string, number>
   items: Recommendation[]
   notes: string[]
 }

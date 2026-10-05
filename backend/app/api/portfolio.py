@@ -207,7 +207,13 @@ def get_recommendations(portfolio_id: PortfolioId, user: User, store: Store) -> 
         sent,
         u["mutual_funds"],
         read_config("recommendations.yaml"),
+        load_predictions(),
     )
+
+
+def load_predictions() -> pd.DataFrame | None:
+    f = get_settings().data_dir / "processed" / "predictions.parquet"
+    return pd.read_parquet(f) if f.exists() else None
 
 
 @router.put("/{portfolio_id}/holdings")
