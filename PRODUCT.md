@@ -39,7 +39,9 @@ It is a portfolio intelligence and risk platform built around a research questio
 - **Out of scope:** real-money or automated trading, HFT, and LLM-made buy/sell decisions.
 
 ## Brand Commitments
-- Name: **Portfolio Intelligence**. No logo, palette or voice has been committed yet.
+- Name: **Portfolio Intelligence**.
+- **Visual reference (user-pinned, 2026-10-05):** feel like an established Indian investing app. Groww is the primary reference (clean friendly polish, signature green accent, big hero numbers, stock-app interactions such as pill tabs and time-range charts); Zerodha Kite/Console and Smallcase set the quality bar. Inspiration only: never Groww's logo, name, exact brand assets or copy.
+- Recommendations stay **research-framed**: labelled insights with reasons and the disclaimer, never trade-style BUY/SELL buttons.
 - A disclaimer is mandatory wherever recommendations appear: academic decision-support only, recommendations are hypothetical, not financial advice, no guaranteed profit.
 
 ## Evidence on Hand

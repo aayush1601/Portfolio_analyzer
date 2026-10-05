@@ -1,281 +1,296 @@
 ---
 name: Portfolio Intelligence
-description: Look-through portfolio exposure, risk, news impact and capped recommendations, drawn as a newspaper chart desk.
+description: A Groww-grade investing app whose one twist is honesty about what you really own.
 colors:
-  ground: "#f3f4f0"
+  canvas: "#f5f6f8"
   panel: "#ffffff"
-  ink: "#18222d"
-  ink-2: "#4a5663"
-  ink-3: "#66707c"
-  rule: "#d6dad3"
-  rule-soft: "#e8eae5"
-  bar: "#163a5f"
-  bar-ink: "#e9eef4"
-  bar-ink-2: "#b3c2d3"
-  direct: "#1f4e79"
-  direct-soft: "#dbe5ef"
-  via: "#b8770c"
-  via-soft: "#f6ead2"
-  alert: "#b3261e"
-  alert-soft: "#f8e3e1"
+  ink: "#1e2235"
+  ink-2: "#565b70"
+  ink-3: "#6e7387"
+  line: "#e5e7ee"
+  line-soft: "#f0f1f5"
+  brand: "#00b386"
+  brand-ink: "#00845f"
+  brand-soft: "#e5f7f2"
+  brand-deep: "#006c4e"
+  loss: "#c53c22"
+  loss-soft: "#fdece8"
+  accent: "#5367ff"
+  accent-ink: "#3a4ad8"
+  accent-soft: "#eef0ff"
+  via: "#e39a12"
+  via-soft: "#fdf2d8"
+  via-ink: "#7a4f00"
 typography:
-  headline:
-    fontFamily: "Atkinson Hyperlegible Next Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.4rem"
+  display:
+    fontFamily: "Manrope Variable, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "3.1rem"
+    fontWeight: 800
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+    fontFeature: "\"tnum\""
+  title:
+    fontFamily: "Manrope Variable, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.15rem"
     fontWeight: 700
     lineHeight: 1.375
-    letterSpacing: "-0.01em"
-  title:
-    fontFamily: "Atkinson Hyperlegible Next Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.05rem"
-    fontWeight: 700
-    lineHeight: 1.5
-    letterSpacing: "-0.01em"
   body:
-    fontFamily: "Atkinson Hyperlegible Next Variable, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Manrope Variable, ui-sans-serif, system-ui, sans-serif"
     fontSize: "15px"
-    fontWeight: 400
+    fontWeight: 500
     lineHeight: 1.5
   label:
-    fontFamily: "Atkinson Hyperlegible Next Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.8rem"
-    fontWeight: 400
-    lineHeight: 1.5
-  figure:
-    fontFamily: "Atkinson Hyperlegible Mono, ui-monospace, monospace"
-    fontSize: "1.05rem"
-    fontWeight: 600
-    lineHeight: 1.5
-    letterSpacing: "-0.01em"
-    fontFeature: "tnum"
-  number:
-    fontFamily: "Atkinson Hyperlegible Mono, ui-monospace, monospace"
-    fontSize: "0.9rem"
-    fontWeight: 400
-    lineHeight: 1.5
-    letterSpacing: "-0.01em"
-    fontFeature: "tnum"
+    fontFamily: "Manrope Variable, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.82rem"
+    fontWeight: 700
+    lineHeight: 1.4
+  caption:
+    fontFamily: "Manrope Variable, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.78rem"
+    fontWeight: 500
+    lineHeight: 1.4
 rounded:
-  stamp: "2px"
-  control: "3px"
+  avatar-sm: "6px"
+  control: "8px"
+  avatar: "12px"
+  card: "16px"
+  pill: "9999px"
 spacing:
-  gutter-mobile: "20px"
-  gutter-desktop: "24px"
-  page-desktop: "32px"
-  figure-gap: "20px"
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  card-x: "20px"
+  card-x-wide: "24px"
+  gap: "20px"
+  page-x: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.bar}"
-    textColor: "{colors.bar-ink}"
+    backgroundColor: "{colors.brand-ink}"
+    textColor: "{colors.panel}"
+    typography: "{typography.label}"
     rounded: "{rounded.control}"
-    padding: "6px 12px"
-  button-primary-hover:
-    backgroundColor: "{colors.direct}"
+    padding: "8px 14px"
   button-quiet:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
+    typography: "{typography.label}"
     rounded: "{rounded.control}"
-    padding: "6px 12px"
-  input-field:
+    padding: "8px 14px"
+  card:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
-    padding: "6px 8px"
-  figure:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.ink}"
-    padding: "16px 24px"
-  top-bar:
-    backgroundColor: "{colors.bar}"
-    textColor: "{colors.bar-ink}"
-  stamp-add:
-    backgroundColor: "{colors.direct}"
-    textColor: "{colors.panel}"
-    rounded: "{rounded.stamp}"
-    padding: "2px 8px"
-  stamp-reduce:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.stamp}"
-    padding: "2px 8px"
-  stamp-hold:
-    backgroundColor: "{colors.panel}"
+    rounded: "{rounded.card}"
+    padding: "20px 24px"
+  segmented:
+    backgroundColor: "{colors.line-soft}"
     textColor: "{colors.ink-2}"
-    rounded: "{rounded.stamp}"
-    padding: "2px 8px"
+    rounded: "{rounded.pill}"
+    padding: "4px"
+  segmented-active:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "4px 12px"
+  chip-neutral:
+    backgroundColor: "{colors.line-soft}"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.pill}"
+    padding: "2px 10px"
+  chip-gain:
+    backgroundColor: "{colors.brand-soft}"
+    textColor: "{colors.brand-ink}"
+    rounded: "{rounded.pill}"
+    padding: "2px 10px"
+  chip-loss:
+    backgroundColor: "{colors.loss-soft}"
+    textColor: "{colors.loss}"
+    rounded: "{rounded.pill}"
+    padding: "2px 10px"
+  chip-accent:
+    backgroundColor: "{colors.accent-soft}"
+    textColor: "{colors.accent-ink}"
+    rounded: "{rounded.pill}"
+    padding: "2px 10px"
+  insight-pill:
+    backgroundColor: "{colors.brand-soft}"
+    textColor: "{colors.brand-ink}"
+    rounded: "{rounded.pill}"
+    padding: "4px 12px"
+  input:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "8px 12px"
+  nav-tab:
+    textColor: "{colors.ink-2}"
+    padding: "18px 12px"
+  nav-tab-active:
+    textColor: "{colors.ink}"
+    padding: "18px 12px"
 ---
 
 # Design System: Portfolio Intelligence
 
 ## Overview
 
-**Creative North Star: "The Chart Desk"**
+**Creative North Star: "The Honest Investing App"**
 
-A newspaper data-graphics desk run as a working app. Every screen leads with a chart whose headline states its finding as a full sentence, followed by a one-paragraph dek, the graphic, and a small source line ruled off beneath. The ground is a cool newsprint white, panels are plain white, and a single deep-navy bar carries the product name, portfolio select, tabs and the data-as-of stamp. Light by design: the app is projected in lit rooms and printed into reports, often in greyscale.
+A retail investor should recognise this instantly as an established Indian investing app: white cards floating on a faint cool-grey canvas, one confident green, big tabular hero numbers, pill tabs and time-range charts. Its one twist is honesty about what you really own. Every surface that shows exposure splits it into what you hold directly (indigo) and what your funds add on top (amber hatch), and anything not yet visible is shown as grey hatch rather than guessed.
 
-Density is that of a well-set business page: ruled, sortable tables and compact horizontal-bar graphics, generous line height, no decoration that does not encode data. Colour is a legend, not a mood: navy means held directly, ochre hatching means held through funds, grey hatching means not yet visible, and vermilion appears only when something crosses a limit. Every encoding also survives without colour, through hatch, sign, glyph or position.
+The world is light because it is projected in lit rooms and printed into a report. Density is generous: cards breathe at 20 to 24px, the grid gaps at 20px, and figures carry the hierarchy rather than decoration. Meaning never rides on colour alone: gains and losses carry a sign and a filled triangle, through-fund exposure is a hatch pattern that survives greyscale, and breaches carry an alert glyph.
 
-The system refuses the KPI-card-and-donut admin dashboard, the trading terminal, and the dark "fintech" look.
+Motion has exactly one idea: values travel along their axis. Bars draw out from zero, the effective-exposure ring travels from the direct dot to where you really are, and re-ranked lists glide rows to their new place. Insights are research-framed: labelled pills with reasons and a disclaimer, never trade buttons.
 
 **Key Characteristics:**
-- Sentence headlines that state the finding, balanced across lines, max 60ch.
-- Figures open with a 2px ink rule on top; no cards, no shadows, no radius.
-- Navy / ochre-hatch / grey-hatch / vermilion as a fixed data legend across every chart.
-- Tabular monospace figures with true minus signs and Indian digit grouping.
-- One company, one name plate (symbol · sector · effective %), identical everywhere.
-- One motion idea: values travel along their axis (marks draw from zero; changed values glide from where they were).
+- White 16px cards with a hairline border and a whisper of shadow on a cool canvas.
+- Manrope throughout, weight 500 body, 700 to 800 for figures and titles, tabular numerals for every number.
+- Green is the brand and gains; coral is losses and alerts; indigo is selection and direct exposure; amber hatch is exposure through funds.
+- Signed figures always pair sign, arrow and colour.
+- One motion idea: values travel along their axis.
 
 ## Colors
 
-A cool, near-neutral newsprint palette with two data hues and one alarm hue, each owning exactly one meaning.
+A cool, near-white neutral field carrying four signal hues, each with one job.
 
 ### Primary
-- **Direct Navy** (direct): solid fill for anything held directly: dumbbell direct bars and dots, sector direct segments, stock segments of the weight strip, ScoreBar fill, positive SignedBar halves, histogram body bars, the filled ADD stamp, focus outlines and text carets.
-- **Masthead Navy** (bar): the top bar and the primary button at rest. Darker than Direct Navy so the masthead reads as furniture, not data. Primary buttons hover to Direct Navy.
-- **Masthead Ink / Masthead Ink Muted** (bar-ink / bar-ink-2): active tab and product name on the bar; inactive tabs, the as-of stamp and secondary bar controls.
+- **Market Green** (brand): the app mark, the active tab underline, the value-chart line and soft area fill when the range is up, the gain side of signed bars, the Low band of the riskometer, the text-selection tint (brand-soft).
+- **Deep Market Green** (brand-ink): primary button fills and gain text (Delta, gain chips, Add pills). Brand green is too light for white text or small type; brand-ink carries both. Hover deepens to **brand-deep** (#006c4e).
 
 ### Secondary
-- **Fund Ochre** (via) over **Fund Ochre Wash** (via-soft): only ever as the 135° diagonal hatch (2px ochre, 3px wash) with a 1px ochre outline, marking exposure added through funds; also the small "+x pts via funds" annotation text. Fund Ochre Wash doubles as the text-selection colour.
+- **Signal Indigo** (accent): interactive selection and focus (focus ring, caret, field focus border), directly-held exposure in every bar and dot, score bars, histogram body, reason bullets. **Indigo Ink** (accent-ink) is the text on indigo-soft (Switch pill, accent chip, "See what you really own" link); indigo-soft also grounds the insights disclaimer banner.
 
 ### Tertiary
-- **Vermilion** (alert) and **Vermilion Wash** (alert-soft): cap breaches, the negative-news alert banner, error states, cap-rule chips on blocked actions, and the hatched tail of the risk histogram. Always paired with the drawn alert triangle.
+- **Coral Loss** (loss): losses, falling value line, breaches above a cap, error states, triggered-rule chips, the hatched VaR tail. Always paired with a down triangle, a minus sign or an alert glyph.
+- **Fund Amber** (via): exposure that reaches you through funds, drawn as a 135-degree hatch (2px amber, 3px via-soft) with a 1px amber outline. The only solid amber use is the riskometer's Moderate band (the fund-factsheet convention). Text naming through-fund amounts uses **via-ink** (#7a4f00), the one dark amber ink.
 
 ### Neutral
-- **Newsprint** (ground): page background behind figures.
-- **Panel White** (panel): every figure, table, the figures strip and form surfaces.
-- **Ink** (ink): headlines, body, figure top rules, table header rules, the VaR cut line.
-- **Ink 2** (ink-2): deks, secondary values, cap lines (dashed), negative SignedBar halves, struck-through blocked actions.
-- **Ink 3** (ink-3): source lines, axis labels, zero lines, bullet dots, the grey "not yet visible" hatch, disabled fills.
-- **Rule / Rule Soft** (rule / rule-soft): control borders and section dividers; row dividers, source-line separators, ScoreBar track.
+- **Cool Canvas** (canvas): the page ground and the portfolio switcher fill; table-row hover at 70%.
+- **Panel White** (panel): cards, top bar (95% with backdrop blur), active segment, quiet buttons, fields.
+- **Ink** (ink): headings, figures, chart tooltip ground, riskometer needle.
+- **Ink 2** (ink-2): secondary text, inactive tabs and segments, deks.
+- **Ink 3** (ink-3): captions, axis labels, sources, overridden calls, the not-yet-visible hatch stroke.
+- **Line** (line): card and field borders, table head rule. **Line Soft** (line-soft): row dividers, bar tracks, segmented and neutral chip grounds.
 
 ### Named Rules
-**The Legend Rule.** Navy = held directly. Ochre hatch = added through funds. Grey hatch (1px ink-3 over rule-soft, 135°) = held but not yet visible. These meanings are fixed across every chart; never reuse a data colour for chrome or emphasis.
+**The One Job Per Hue Rule.** Green means brand and gain, coral means loss or alert, indigo means selection or direct, amber means through funds. Never borrow a hue for decoration.
 
-**The Vermilion Owns Alerts Rule.** Vermilion appears only where a limit is crossed or something failed: cap breaches, the news alert, errors, the risk tail. A loss is not an alert; losses carry a minus sign and a down triangle in ink, never red.
+**The Hatch Means Hidden Rule.** Amber hatch marks exposure that arrives through funds; grey hatch (1px ink-3 on line-soft, 6px period) marks holdings not yet visible. Hatch is never decorative and never used for anything else.
 
-**The Greyscale Rule.** Every encoding must survive greyscale print: fund exposure is hatched, not just ochre; unmapped exposure is a differently pitched grey hatch; gains and losses carry a sign and a drawn triangle; breaches carry the alert triangle.
+**The Ink-For-Text Rule.** Signal hues on small type use their ink variant (brand-ink, accent-ink, dark amber); the bright hue is for fills, lines and marks.
 
 ## Typography
 
-**Display Font:** none; headlines use the body family at bold weight.
-**Body Font:** Atkinson Hyperlegible Next (variable, self-hosted), with ui-sans-serif, system-ui fallback.
-**Label/Mono Font:** Atkinson Hyperlegible Mono 400/600 (self-hosted), with ui-monospace fallback.
+**Display Font:** Manrope Variable (with ui-sans-serif, system-ui)
+**Body Font:** Manrope Variable
+**Label/Mono Font:** Manrope with tabular figures
 
-**Character:** A legibility-first humanist sans set like a news desk's chart titles, paired with its own mono so every number lines up in columns and reads unambiguously from the back of a room.
+**Character:** One friendly geometric grotesque doing everything; hierarchy comes from weight and size, not from a second family. Medium (500) body keeps it confident on a projector.
 
 ### Hierarchy
-- **Headline** (700, 1.25rem mobile / 1.4rem from 640px, snug leading, -0.01em, balanced wrap): the sentence headline of every Figure. States the finding, max 60ch.
-- **Title** (700, 1.05rem, -0.01em): the product name in the masthead.
-- **Body** (400, 15px root, 1.5): deks (ink-2), table cells at 0.9rem, explanatory paragraphs.
-- **Label** (400, 0.75–0.8rem): figures-strip labels, axis ticks, source lines (ink-3), table headers (600, ink-2).
-- **Figure** (mono 600, 1.05rem, tabular): headline numbers in the figures strip.
-- **Number** (mono 400, 0.75–0.9rem, tabular, -0.01em): every number in tables, charts, plates and annotations.
+- **Display** (800, 2.3rem on phones rising to 3.1rem from 640px, tight, -0.02em, tabular): the Current value hero figure only.
+- **Wordmark** (800, 1.05rem, -0.01em): "Portfolio Intelligence" beside the mark.
+- **Title** (700, 1.08rem rising to 1.15rem, snug, balanced wrap): card titles, written as plain-language findings.
+- **Figure** (700, 1.05rem, tabular): hero sub-stats (Invested, Total returns, 1D returns).
+- **Body** (500, 15px root, 0.88 to 0.9rem in cards, 1.5): deks, reasons, table cells; deks cap at 72ch.
+- **Label** (700 to 800, 0.78 to 0.85rem): buttons, segments, chips, pills, table heads; tabs are 0.92rem, 600 inactive and 800 active.
+- **Caption** (500, 0.72 to 0.8rem, ink-3): stat labels, axis ends, sources, "not yet visible" sub-lines.
 
 ### Named Rules
-**The Tabular Figure Rule.** Every number is set in the mono with tabular figures, true minus (−), Indian grouping for rupees, and "pts" for percentage-point differences.
+**The Tabular Figures Rule.** Every number (money, percent, score, axis) is set with tabular numerals so columns and hero figures never jitter.
 
-**The Sentence Headline Rule.** A figure's title is a full sentence carrying the finding and its number ("30% of this portfolio sits inside funds we can't see into yet."), never a label like "Exposure".
+**The Sentence Case Rule.** No uppercase labels, no tracked-out small caps. Labels are short sentence-case words.
 
 ## Layout
 
-Full-bleed masthead and figures strip, then a centered main column (max 1440px, 16px side padding mobile, 32px from 640px, 24px vertical). Figures sit on Newsprint with a 20px gap.
+Single centred column, max 1240px, page padding 16px (32px from 640px), 24px vertical. A sticky white top bar carries the mark and wordmark, underline tabs, and the portfolio switcher with a New portfolio button. Pages are grids of cards with 20px gaps: Overview pairs a fluid main column with a 340px right rail from 1024px (hero and value chart left; exposure-gap insight and allocation right; holdings list spanning both); Risk splits 1.3fr / 1fr. Cards pad 20px, 24px from 640px; list rows pad 14px vertically.
 
-- **Look-through:** two columns from 1024px (1.55fr / 1fr): dumbbell left, sector bars right; the company table spans both below. Risk uses 1.3fr / 1fr. Below 1024px everything stacks in one column.
-- **Figure insets:** 20px horizontal on mobile, 24px from 640px. Tables bleed to the figure edges and keep the same inset on their first and last cells; they scroll horizontally below 640px width rather than reflow.
-- **Figures strip:** a 2×2 grid on mobile; from 640px a single row of cells divided by 1px vertical rules.
-- **Dumbbell rows:** from 640px a three-column grid (plate 6.5–11rem / track / 6.5rem value); on mobile the plate moves above the track.
-- **Action rows:** three columns from 768px (plate and stamp / score breakdown / reasons), stacked below.
-- **News rows:** fixed table columns that never reflow; the masthead as-of stamp hides below 768px.
+Below 768px the tab row drops to its own full-bleed line and scrolls horizontally; the switcher fills the remaining width and New portfolio collapses to its plus icon. Tables keep a 640px minimum and scroll inside their card; multi-column rows (insights, news) stack to one column. Weight and mini-bar columns hide on narrow screens; the effective figure stays.
+
+Print: the canvas turns white and navigation, edit and new-portfolio controls disappear, so a page prints as its cards. Projector: nothing depends on thin strokes or subtle contrast; hatches and triangles carry meaning in greyscale.
 
 ## Elevation & Depth
 
-Completely flat. No box shadows anywhere. Hierarchy comes from rules and tone: each figure opens with a 2px ink rule, panels are white on Newsprint, tables use a 1px ink header rule and soft row rules, and the masthead is the only dark mass. The only ring is the 2px panel-coloured ring that lifts the direct dot off its bar in the dumbbell.
+Nearly flat. Cards lift off the canvas with a hairline border plus a soft two-layer shadow; nothing else floats except the active segment pill and the chart tooltip. Depth never encodes anything beyond "this is a card" and "this is selected".
+
+### Shadow Vocabulary
+- **Card whisper** (`box-shadow: 0 1px 2px rgb(30 34 53 / 0.04), 0 4px 16px -6px rgb(30 34 53 / 0.08)`): every card.
+- **Segment lift** (`box-shadow: 0 1px 3px rgb(30 34 53 / 0.12)`): the active option in a segmented control.
 
 ### Named Rules
-**The Rule-Not-Shadow Rule.** Separate with rules (2px ink to open a figure, 1px rule between sections, rule-soft between rows), never with shadows or floating cards.
+**The Whisper Rule.** Shadows are barely there; the border does the separating. Never deepen a card shadow for emphasis.
 
 ## Shapes
 
-Square by default. Figures, panels, bars and table rows have no radius. Controls (buttons, inputs, the portfolio select) take a barely-there 3px corner; stamps and rule chips 2px. Circles are reserved for data: the dumbbell's direct dot and effective ring, and 4px bullet dots in notes. Bars are flat-ended. Dashed lines always mean a threshold: the cap line, the VaR cut, and the divider before "not yet visible" rows.
+Friendly rounding at three sizes: 16px cards and status panels; 8px buttons, fields and error boxes; full pills for segments, chips, insight pills, the switcher and every bar and track. Bars are capsule-ended; the through-fund segment rounds only its right end so it reads as continuing the direct bar. Avatars are 12px tiles (6px at small size). Icons are authored inline SVG on a 16px grid with a 1.5 stroke and round caps; gain and loss triangles are filled. The app mark is a 9px-radius green tile holding a white lens over a rising line.
 
 ## Components
 
 ### Buttons
-- **Shape:** 3px corners, 6px 12px padding, 0.875rem semibold, optional 16px leading icon.
-- **Primary:** Masthead Navy fill with Masthead Ink text; hovers to Direct Navy; disabled fills Ink 3.
-- **Quiet:** Panel White with a 1px Rule border and Ink text; border darkens to Ink 3 on hover; disabled text Ink 3.
-- **Focus:** global 2px Direct Navy outline, 2px offset.
+- **Shape:** gently rounded (8px).
+- **Primary:** brand-ink fill, white bold 0.88rem label, 8px 14px; hover deepens; disabled falls to ink-3. The header New portfolio button uses the same fill as a full pill.
+- **Quiet:** white with a line border, ink text; hover darkens the border to ink-3.
+- **Focus:** global 2px indigo outline at 2px offset.
+
+### Segmented control
+A line-soft pill track with a 4px inset; options are bold 0.82rem pills, the active one white with the segment lift. Used for value-chart ranges (1M to 5Y), the holdings view, and news order.
+
+### Chips and Insight pills
+- **Chip:** full pill, bold 0.78rem, tinted ground with ink-variant text in five tones (neutral, gain, loss, accent, via).
+- **Insight pill:** weight 800, 4px 12px: Add (green), Hold (neutral), Reduce (coral), Switch (indigo). When a cap overrides the scored call, the original call sits beside it in ink-3 with a 2px strike drawn through it, never hidden.
+
+### Cards / Containers
+- **Corner Style:** 16px. **Background:** panel. **Border:** 1px line. **Shadow:** card whisper.
+- **Anatomy:** optional title (a finding sentence) with dek and right-side aside, body, optional source footer above a line-soft rule in 0.78rem ink-3.
+- **Status:** loading is a plain card reading "Loading ..."; error is a loss-soft card with a coral-tinted border, the message and a Try again quiet button; stale data dims to 55% while refetching.
 
 ### Inputs / Fields
-- **Style:** Panel White, 1px Rule border, 3px corners, 0.9rem text.
-- **Focus:** border shifts to Direct Navy (outline suppressed). Hover darkens border to Ink 3.
-- **Error:** a vermilion message with `role="alert"` below the form.
+- **Style:** white, 1px line border, 8px radius, 0.9rem medium; hover border ink-3.
+- **Focus:** border turns indigo. **Error:** loss-soft box with coral text.
 
 ### Navigation
-- **Masthead:** Masthead Navy bar with product name (Title), portfolio select (translucent white 10% fill, 25% border), "New portfolio", and the "Prices to … · news near-real-time" stamp.
-- **Tabs:** 0.95rem text; inactive Masthead Ink Muted, active Masthead Ink semibold with a 3px Masthead Ink underline and `aria-current`. Horizontally scrollable on narrow screens. Routes are hash links, so every view is bookmarkable.
+White sticky bar with backdrop blur. Tabs are text links with a 3px bottom rule: inactive ink-2 semibold, active ink extrabold over a brand-green rule. The portfolio switcher is a canvas-filled pill select.
 
-### Figure (signature)
-The unit of every screen: 2px Ink top rule, Panel White, sentence headline, optional ink-2 dek (max 60ch), the graphic, then an optional 0.8rem ink-3 source line set off by a rule-soft divider stating data provenance. An optional aside (legend) sits right of the headline.
+### Identity
+- **Avatar:** two-initial monogram tile, stable tone per company from four tinted pairs (indigo, green, amber, neutral).
+- **Plate:** symbol (bold) · sector (ink-3) · effective % (tabular), identical wherever a company appears.
+- **Delta:** signed figure with a filled triangle; brand-ink up, coral down, ink-2 flat.
 
-### Name Plate
-Symbol (semibold ink) · sector (ink-3, truncates) · effective % (mono, 0.85em, ink-2). Funds show their name. Identical wherever a company appears; the compact variant drops the sector.
+### Charts
+- **ValueChart (hero):** a 2.25px line in brand green (coral if the range fell) over a soft vertical gradient fill; a dashed ink-3 Invested baseline labelled on the chart; hover crosshair, ringed dot and an ink tooltip with value and date. The line is deliberately static.
+- **Dumbbell:** indigo direct bar and dot, amber-hatched through-fund extension, and an indigo ring at effective exposure that travels from the dot; dashed cap line; breaches go coral with an alert glyph; not-yet-visible rows in grey hatch below a dashed divider.
+- **SectorBars:** the same direct-plus-hatch bar against the sector cap.
+- **AllocationBar:** one 12px capsule split into stocks (indigo), mutual funds (amber hatch), cash (ink-3 at 40%), with a legend list.
+- **Riskometer:** the semicircle fund-factsheet gauge, Low green / Moderate amber / High coral, inactive bands at 28%, ink needle easing to the score.
+- **TailHistogram:** indigo day bars, the VaR tail hatched in coral, a dashed cut line annotated in words.
+- **SignedBar / ScoreBar:** a diverging green-or-coral bar about a zero tick; a 0 to 100 indigo capsule with its number.
 
-### Dumbbell (signature)
-One row per company on a shared 0-to-max track: navy bar to the direct dot, ochre-hatch bar from direct to the effective ring, a dashed ink-2 cap line labelled "15% cap", and the effective value on the right (vermilion with alert triangle above cap; "+x pts via funds" in ochre beneath). "Not yet visible" rows follow a dashed divider, in italic ink-2 with the grey hatch.
-
-### SectorBars
-Label and value above a thin track; navy direct segment plus ochre-hatch fund segment against the dashed sector cap. The unmapped row is italic with the grey hatch and no cap line.
-
-### WeightStrip
-A single 28px 100% bar, one segment per holding separated by 2px panel gaps: navy for stocks, ochre hatch for funds, Rule grey for cash. Labels (name + %) appear under segments of 6% or more.
-
-### TailHistogram
-SVG bars in Direct Navy; bins beyond the VaR cut take a vermilion 45° hatch over Vermilion Wash; a dashed ink line marks the cut, annotated in HTML ("1-in-N bad day: −x%", "N days fell further") so text stays legible at phone width.
-
-### SignedBar and ScoreBar
-SignedBar diverges from a 1px ink-3 zero line: positive navy to the right, negative ink-2 to the left; direction carries the sign. ScoreBar is a 6px rule-soft track with a navy fill and the mono score beside it; null shows "n/a".
-
-### Sortable Table
-1px Ink header rule, 0.8rem ink-2 semibold headers, rule-soft row rules, subtle Newsprint row hover. Sortable headers are buttons with `aria-sort`; the active one shows a small drawn triangle. Numeric columns right-aligned in the mono.
-
-### Delta
-Signed mono figure with a drawn up/down triangle in ink-2 ahead of it. Never coloured green or red.
-
-### Stamp
-Action label in a 2px-bordered 2px-radius box, 0.8rem bold, 0.06em tracking: BUY/INCREASE filled Direct Navy with white text; REDUCE/SWITCH outlined in Ink; HOLD outlined Ink 3 with ink-2 text. When a cap overrides a call, the original action stays visible, struck through in ink-2, beside the new stamp, followed by vermilion-outlined rule chips naming the cap.
-
-### Status
-Loading: Panel White with a 2px Rule top rule and a pulsing "Loading …" line in ink-3. Error: 2px Vermilion top rule, "Couldn't load …" in semibold ink, the message in ink-2, and a quiet "Try again" button. Alerts: Vermilion Wash band with a 2px vermilion top rule and the alert triangle.
+### Signature: What you hold / What you really own
+The holdings card's segmented toggle re-ranks the list from statement holdings (value, weight, Delta) to look-through companies (direct-plus-hatch mini bar, effective %, "x% direct"), with unseen funds as italic grey-hatch rows. Rows glide to their new place through a View Transition.
 
 ### Motion
-One idea, values travel along their axis, in five uses:
-- **Draw (`draw-x`):** chart marks draw out from their origin (`scaleX` 0 → 1, 700ms, cubic-bezier(0.16, 1, 0.3, 1)), staggered 40ms per row, fund segment trailing by 200ms.
-- **Look-through travel (`travel-x`, the focal moment):** the effective-exposure ring starts at the direct dot and travels with the ochre hatch to where you really are (`translateX(-100cqw)` → 0 inside a direct→effective container, 700ms, same curve and delay as the hatch).
-- **Glide:** when data changes in place (risk window, confidence), histogram bars rescale (`scaleY`, 320ms) and the VaR line, its label and the score marker slide (300ms ease-out). Hatched tail bars keep real geometry so the hatch never distorts.
-- **Re-rank:** sorting a table slides rows to their new place with View Transitions (280ms); the page itself does not fade. Instant where unsupported or under reduced motion.
-- **Strike:** an action a cap overrode is struck through by a line that draws across it (320ms, 450ms after the row), so it reads as cancelled, not removed.
-
-Feedback: a figure refetching keeps its previous data at 55% opacity (150ms out, 250ms back). Hover states are plain colour transitions. Reduced motion collapses every duration to 1ms and skips the re-rank transition; the dimming and the strike line still appear, so the state stays legible.
-
-### Print
-Print forces a white ground and hides tabs and the "New portfolio" control; hatching and signs carry every encoding in greyscale.
+One idea, values travel along their axis, all on `cubic-bezier(0.16, 1, 0.3, 1)`:
+- **draw-x** (700ms): bars grow from zero, staggered 40 to 60ms per row, the through-fund segment 200ms later.
+- **travel-x** (700ms): the effective ring slides out from the direct dot.
+- **glide** (300 to 600ms): needle, cut line and histogram bars ease to new values.
+- **re-rank** (300ms View Transition): sortable tables, the holdings toggle and news order.
+- **strike** (320ms after 450ms): the overridden call is struck once.
+- **refetch:** content dims to 55% (150ms) and settles back (250ms).
+- **Reduced motion:** animations and transitions collapse to 1ms and re-rank skips the View Transition.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** open every figure with a 2px Ink rule and a sentence headline that states the finding with its number.
-- **Do** end every figure with a source line naming the data, model or rules version behind it.
-- **Do** hatch fund exposure (ochre) and not-yet-visible exposure (grey) so they survive greyscale.
-- **Do** set every number in Atkinson Hyperlegible Mono with tabular figures and a true minus.
-- **Do** keep one name plate per company, identical in every view.
-- **Do** keep a blocked action visible, struck through, next to the stamp and the cap that overrode it.
-- **Do** show the disclaimer wherever recommendations appear, and say "near-real-time", never "real-time".
+- **Do** pair every gain or loss with a sign and a filled triangle, not just green or coral.
+- **Do** split exposure into indigo direct plus amber-hatched through-funds, and show unseen funds as grey hatch instead of guessing.
+- **Do** use brand-ink, not brand green, for button fills and gain text.
+- **Do** set every number with tabular figures.
+- **Do** write card titles as plain-language findings and keep the disclaimer wherever insights appear.
+- **Do** animate only along the value's axis, on the one ease curve, with the reduced-motion path intact.
 
 ### Don't:
-- **Don't** use vermilion for losses, emphasis or decoration; it means a limit was crossed or something failed.
-- **Don't** colour gains green and losses red; use sign plus drawn triangle in ink.
-- **Don't** use KPI cards, donuts, gauges or shadows; the figures strip is ruled cells, not cards.
-- **Don't** introduce a dark theme or terminal styling; this is projected in lit rooms and printed.
-- **Don't** add a second motion idea: everything that moves is a value travelling along its axis; no fades-and-rises, hover lifts, parallax or loops.
-- **Don't** use glyph or emoji icons; icons are authored inline SVG on a 16px grid with a 1.5 stroke.
+- **Don't** add trade-style Buy or Sell buttons; insights are labelled pills with reasons.
+- **Don't** use amber hatch or grey hatch for anything other than through-fund and not-yet-visible exposure.
+- **Don't** animate the value line drawing in; it is static by design.
+- **Don't** add uppercase eyebrows or kickers above titles.
+- **Don't** use Groww's logo, name, exact brand assets or copy; the reference is inspiration only.
+- **Don't** go dark; the world is light for projectors and print.

@@ -12,6 +12,7 @@ export type HoldingValue = Holding & {
   pl: number
   daily_pl: number
 }
+export type ValueHistory = { portfolio_id: string; invested: number; points: { date: string; value: number }[] }
 export type PortfolioSummary = { portfolio_id: string; name: string; created_at: string }
 export type Snapshot = {
   portfolio_id: string

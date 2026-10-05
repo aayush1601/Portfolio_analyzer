@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { TailHistogram } from '../charts'
+import { Riskometer, TailHistogram } from '../charts'
 import { api, useApi, type Reference, type Risk, type StressResult } from '../api'
-import { Button, Figure, IconPlus, IconTrash, Notes, Plate, Status } from '../ui'
+import { Button, Card, IconPlus, IconTrash, Notes, Plate, Segmented, Status } from '../ui'
 import { fixed, inr, pct, signedPct } from '../format'
 
 const LOOKBACKS = [
@@ -10,44 +10,16 @@ const LOOKBACKS = [
   { days: 756, label: '3 years' },
   { days: 1260, label: '5 years' },
 ]
+const SHORT: Record<number, string> = { 63: '3M', 252: '1Y', 756: '3Y', 1260: '5Y' }
 const field =
-  'rounded-[3px] border border-rule bg-panel px-2 py-1.5 text-[0.9rem] text-ink hover:border-ink-3 focus:border-direct focus:outline-none'
+  'rounded-lg border border-line bg-panel px-3 py-2 text-[0.9rem] font-medium text-ink hover:border-ink-3 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
 
 function Metric({ label, value, help }: { label: string; value: string; help: string }) {
   return (
-    <div className="grid grid-cols-[1fr_auto] gap-x-4 border-b border-rule-soft py-2">
+    <div className="grid grid-cols-[1fr_auto] gap-x-4 border-b border-line-soft py-2">
       <dt className="font-semibold text-ink">{label}</dt>
-      <dd className="num row-span-2 self-center text-right text-[1.05rem]">{value}</dd>
+      <dd className="num row-span-2 self-center text-right text-[1.05rem] font-bold">{value}</dd>
       <dd className="text-[0.85rem] text-ink-2">{help}</dd>
-    </div>
-  )
-}
-
-function ScoreScale({ score, band }: { score: number; band: string }) {
-  const bands = [
-    { name: 'Low', to: 33 },
-    { name: 'Moderate', to: 66 },
-    { name: 'High', to: 100 },
-  ]
-  return (
-    <div aria-label={`Risk score ${score} of 100, ${band}`} role="img">
-      <div className="relative flex h-3">
-        {bands.map((b, i) => (
-          <div
-            key={b.name}
-            className={`h-full border-r border-panel ${['bg-direct-soft', 'bg-[#a9bfd6]', 'bg-direct'][i]}`}
-            style={{ width: `${b.to - (bands[i - 1]?.to ?? 0)}%` }}
-          />
-        ))}
-        <div className="absolute -top-1.5 h-6 w-1 -translate-x-1/2 bg-ink ring-2 ring-panel transition-[left] duration-300 ease-out" style={{ left: `${score}%` }} />
-      </div>
-      <div className="mt-1 flex text-[0.75rem] text-ink-3">
-        {bands.map((b, i) => (
-          <span key={b.name} style={{ width: `${b.to - (bands[i - 1]?.to ?? 0)}%` }}>
-            {b.name}
-          </span>
-        ))}
-      </div>
     </div>
   )
 }
@@ -87,7 +59,7 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
 
   const scenario = rows.map((r) => `${r.sector} ${Number(r.shock) > 0 ? '+' : ''}${r.shock}%`).join(', ')
   return (
-    <Figure
+    <Card
       title={
         result
           ? `If ${scenario}, what’s visible of this portfolio would move about ${signedPct(result.estimated_loss)}: ${inr(result.estimated_loss_inr)}.`
@@ -120,14 +92,14 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
           </Button>
           <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Running…' : 'Run stress test'}</Button>
         </div>
-        {error && <p role="alert" className="text-alert">{error}</p>}
+        {error && <p role="alert" className="text-loss">{error}</p>}
       </form>
       {result && result.top_contributors.length > 0 && (
         <div className="mt-5">
-          <h3 className="mb-2 text-[0.85rem] font-semibold text-ink-2">Where the move comes from</h3>
+          <h3 className="mb-2 text-[0.85rem] font-bold text-ink-2">Where the move comes from</h3>
           <ul className="space-y-1">
             {result.top_contributors.map((c) => (
-              <li key={c.symbol} className="flex items-baseline justify-between gap-3 border-b border-rule-soft py-1">
+              <li key={c.symbol} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1">
                 {c.symbol === 'Other/Unmapped' ? <span className="text-ink-2 italic">Inside funds, not yet visible</span> : <Plate id={c.symbol} />}
                 <span className="num">{signedPct(c.loss, 2)}</span>
               </li>
@@ -135,7 +107,7 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
           </ul>
         </div>
       )}
-    </Figure>
+    </Card>
   )
 }
 
@@ -148,47 +120,45 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
 
   const controls = (
     <div className="no-print flex flex-wrap gap-2">
-      <label className="text-[0.85rem] text-ink-2">
-        <span className="sr-only">History window</span>
-        <select className={field} value={lookback} onChange={(e) => setLookback(Number(e.target.value))}>
-          {LOOKBACKS.map((l) => <option key={l.days} value={l.days}>Last {l.label}</option>)}
-        </select>
-      </label>
-      <label className="text-[0.85rem] text-ink-2">
-        <span className="sr-only">Confidence</span>
-        <select className={field} value={confidence} onChange={(e) => setConfidence(Number(e.target.value))}>
-          {[0.9, 0.95, 0.99].map((c) => <option key={c} value={c}>{pct(c, 0)} confidence</option>)}
-        </select>
-      </label>
+      <Segmented label="History window" options={LOOKBACKS.map((l) => ({ value: l.days, label: SHORT[l.days] }))} value={lookback} onChange={setLookback} />
+      <Segmented label="Confidence" options={[0.9, 0.95, 0.99].map((c) => ({ value: c, label: pct(c, 0) }))} value={confidence} onChange={setConfidence} />
     </div>
   )
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-start">
       <Status q={q} what="risk metrics">
         {(r) => (
-          <Figure
-            title={`Risk score ${r.risk_score} of 100, ${r.risk_band.toLowerCase()}. On a bad day (1 in ${odds}) this portfolio loses about ${pct(r.var_1d.historical)} or more.`}
+          <Card
+            title={`Risk score ${r.risk_score} of 100, ${r.risk_band.toLowerCase()}. On a bad day (1\u00a0in\u00a0${odds}) this portfolio loses about ${pct(r.var_1d.historical)} or more.`}
             dek={`Today’s weights applied to the last ${r.observations} trading days (${window}). Cash counts as risk-free.`}
             aside={controls}
             source={
               <>
-                Score weights {r.score_weights_version} (config/risk_score.yaml), volatility annualised over 252 days, beta vs NIFTY 50.
+                Score weights {r.score_weights_version}, volatility annualised over 252 days, beta vs NIFTY 50.
                 {r.notes.length > 0 && <span className="mt-1 block"><Notes notes={r.notes} /></span>}
               </>
             }
           >
-            <TailHistogram edges={r.return_histogram.edges} counts={r.return_histogram.counts} varLoss={r.var_1d.historical} odds={odds} />
-            <p className="mt-1 mb-5 text-[0.8rem] text-ink-3">Each bar counts the days with that return; hatched bars are the bad-day tail.</p>
-            <ScoreScale score={r.risk_score} band={r.risk_band} />
+            <div className="grid items-center gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+              <div className="text-center">
+                <Riskometer score={r.risk_score} band={r.risk_band} />
+                <p className="mt-1 text-[0.85rem] font-bold text-ink-2">{r.risk_band} risk · score {r.risk_score} of 100</p>
+              </div>
+              <div>
+                <TailHistogram edges={r.return_histogram.edges} counts={r.return_histogram.counts} varLoss={r.var_1d.historical} odds={odds} />
+                <p className="mt-1 text-[0.8rem] text-ink-3">Each bar counts the days with that return; hatched bars are the bad-day tail.</p>
+              </div>
+            </div>
+            <div className="mb-1 h-5" />
             <dl className="mt-5 grid gap-x-8 md:grid-cols-2">
               <div>
-                <h3 className="border-b border-ink pb-1 text-[0.8rem] font-semibold text-ink-2">Return and swings</h3>
+                <h3 className="border-b border-line pb-2 text-[1rem] font-extrabold text-ink">Return and swings</h3>
                 <Metric label="Annual return" value={signedPct(r.return_ann)} help="Average daily return × 252." />
                 <Metric label="Volatility" value={pct(r.volatility_ann)} help="How much the value swings in a typical year." />
                 <Metric label="Sharpe ratio" value={fixed(r.sharpe)} help={`Return above the ${pct(r.risk_free_rate)} risk-free rate per unit of volatility.`} />
                 <Metric label="Sortino ratio" value={fixed(r.sortino)} help="Like Sharpe, but only counts downside swings." />
-                <h3 className="mt-4 border-b border-ink pb-1 text-[0.8rem] font-semibold text-ink-2">Market and concentration</h3>
+                <h3 className="mt-6 border-b border-line pb-2 text-[1rem] font-extrabold text-ink">Market and concentration</h3>
                 <Metric label="Beta" value={fixed(r.beta)} help="Moves this much for every 1% the NIFTY 50 moves." />
                 <Metric label="Average correlation" value={r.avg_correlation === null ? 'n/a' : fixed(r.avg_correlation)} help="How alike your holdings move (1 = identical)." />
                 <Metric label="Concentration (direct)" value={fixed(r.hhi_direct, 3)} help="HHI of what you hold directly: 1/N for N equal holdings." />
@@ -196,7 +166,7 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
                 <Metric label="Diversification" value={`${r.diversification_score}/100`} help={`Diversification ratio ${fixed(r.diversification_ratio)}: how much mixing holdings cancels swings.`} />
               </div>
               <div>
-                <h3 className="border-b border-ink pb-1 text-[0.8rem] font-semibold text-ink-2">Losses</h3>
+                <h3 className="border-b border-line pb-2 text-[1rem] font-extrabold text-ink">Losses</h3>
                 <Metric label="Worst fall" value={pct(r.max_drawdown)} help="Largest peak-to-trough drop in the window." />
                 <Metric label="1-day VaR, historical" value={pct(r.var_1d.historical)} help={`Loss exceeded on 1 day in ${odds}, read from past days.`} />
                 <Metric label="1-day VaR, parametric" value={pct(r.var_1d.parametric)} help="Same, assuming returns are normally distributed." />
@@ -204,7 +174,7 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
                 <Metric label="Expected shortfall (CVaR)" value={pct(r.cvar_1d)} help="Average loss on those 1-in-N bad days." />
               </div>
             </dl>
-          </Figure>
+          </Card>
         )}
       </Status>
       <Stress pid={pid} reference={reference} />

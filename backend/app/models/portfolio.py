@@ -55,6 +55,19 @@ class HoldingValue(Holding):
     daily_pl: float
 
 
+class ValuePoint(BaseModel):
+    date: date
+    value: float
+
+
+class ValueHistory(BaseModel):
+    """Today's holdings valued on past dates: how this mix would have moved, not the user's trades."""
+
+    portfolio_id: str
+    invested: float  # Σ quantity × avg_cost, plus cash
+    points: list[ValuePoint]
+
+
 class PortfolioSnapshot(BaseModel):
     portfolio_id: str
     as_of: date

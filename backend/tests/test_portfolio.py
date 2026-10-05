@@ -142,3 +142,19 @@ def test_reference_lists_universe_and_caps(client):
     r = client.get("/reference").json()
     assert len(r["stocks"]) == 50 and len(r["funds"]) == 15
     assert r["caps"] == {"company": 0.15, "sector": 0.25}
+
+
+def test_value_history_marks_todays_quantities_to_past_prices():
+    from app.analytics.portfolio import value_history
+
+    p = make(
+        [
+            {"asset_type": "STOCK", "asset_id": "TCS", "quantity": 2, "avg_cost": 90},
+            {"asset_type": "MF", "asset_id": "120594", "quantity": 10, "avg_cost": 15},
+            {"asset_type": "CASH", "asset_id": "INR", "quantity": 100},
+        ]
+    )
+    h = value_history(p, PRICES, NAVS, date(2026, 9, 1))
+    # D1: 2·100 + 10·20 + 100 = 500; D2: NAV carried forward → 2·110 + 10·20 + 100 = 520
+    assert [(x.date, x.value) for x in h.points] == [(date(2026, 9, 30), 500), (date(2026, 10, 1), 520)]
+    assert h.invested == 2 * 90 + 10 * 15 + 100

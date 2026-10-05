@@ -4,7 +4,14 @@ from datetime import date
 
 import pandas as pd
 
-from app.models.portfolio import AssetType, HoldingValue, Portfolio, PortfolioSnapshot
+from app.models.portfolio import (
+    AssetType,
+    HoldingValue,
+    Portfolio,
+    PortfolioSnapshot,
+    ValueHistory,
+    ValuePoint,
+)
 
 
 class MissingPrice(LookupError):
@@ -80,4 +87,30 @@ def value_portfolio(
         daily_pl=round(sum(r["daily_pl"] for r in rows), 2),
         total_pl=round(sum(r["pl"] for r in rows), 2),
         holdings=holdings,
+    )
+
+
+def value_history(p: Portfolio, prices: pd.DataFrame, navs: pd.DataFrame, since: date) -> ValueHistory:
+    """Value of today's quantities on every trading day since `since` (stock closes; fund NAVs carried
+    forward over days without a NAV; cash constant). Days before an asset's first price are skipped."""
+    px = prices.pivot(index="date", columns="symbol", values="close").sort_index()
+    px = px[px.index >= pd.Timestamp(since)]
+    nav = navs.pivot(index="date", columns="scheme_code", values="nav").reindex(px.index).ffill(limit=5)
+    total = pd.Series(0.0, index=px.index)
+    cash = invested = 0.0
+    for h in p.holdings:
+        if h.asset_type is AssetType.CASH:
+            cash += h.quantity
+            invested += h.quantity
+            continue
+        series = (px if h.asset_type is AssetType.STOCK else nav).get(h.asset_id)
+        if series is None:
+            raise MissingPrice(f"no price history for {h.asset_type}:{h.asset_id}")
+        total = total + h.quantity * series
+        invested += h.quantity * h.avg_cost
+    total = (total + cash).dropna()
+    return ValueHistory(
+        portfolio_id=p.portfolio_id,
+        invested=round(invested, 2),
+        points=[ValuePoint(date=d.date(), value=round(v, 2)) for d, v in total.items()],
     )

@@ -13,14 +13,22 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from app.analytics.exposure import UNMAPPED, effective_exposure, latest_holdings, stress
 from app.analytics.impact import portfolio_news
-from app.analytics.portfolio import MissingPrice, value_portfolio
+from app.analytics.portfolio import MissingPrice, value_history, value_portfolio
 from app.analytics.recommend import recommend
 from app.analytics.risk import asset_returns, risk_report
 from app.analytics.sentiment import ticker_sentiment
 from app.config import get_settings
 from app.models.exposure import ExposureReport, StressRequest, StressResult
 from app.models.news import PortfolioNews
-from app.models.portfolio import AssetType, Holding, Holdings, Portfolio, PortfolioCreate, PortfolioSnapshot
+from app.models.portfolio import (
+    AssetType,
+    Holding,
+    Holdings,
+    Portfolio,
+    PortfolioCreate,
+    PortfolioSnapshot,
+    ValueHistory,
+)
 from app.models.recommendation import RecommendationReport
 from app.models.risk import RiskReport
 from app.services.fund_holdings import load_holdings
@@ -107,6 +115,22 @@ def get_portfolio(portfolio_id: PortfolioId, user: User, store: Store) -> Portfo
     p = owned(store, user, portfolio_id)
     # valuation needs only the last two bars per asset
     return snapshot(p, *load_market(date.today() - timedelta(days=400)))
+
+
+@router.get("/{portfolio_id}/history")
+def get_history(
+    portfolio_id: PortfolioId,
+    user: User,
+    store: Store,
+    days: Annotated[int, Query(ge=7, le=3660)] = 365,
+) -> ValueHistory:
+    p = owned(store, user, portfolio_id)
+    since = date.today() - timedelta(days=days)
+    prices, navs = load_market(since - timedelta(days=10))
+    try:
+        return value_history(p, prices, navs, since)
+    except MissingPrice as e:
+        raise HTTPException(503, f"{e}; re-run app.services.market_data and nav_data") from e
 
 
 @router.get("/{portfolio_id}/risk")
