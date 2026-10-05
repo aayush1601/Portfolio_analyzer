@@ -18,13 +18,13 @@ dependencies = [
     "casparser>=1.4.1",
     "python-multipart>=0.0.32",
     "segno>=1.6.6",
+    "scipy>=1.18.1",
 ]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
 ml = [
     "scikit-learn>=1.9.1",
-    "scipy>=1.18.1",
     "shap>=0.52.0",
     "torch>=2.14.1",
     "transformers>=5.18.0",

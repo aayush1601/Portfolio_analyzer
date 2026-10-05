@@ -1,0 +1,20 @@
+# Allocation engine (Phase 10). Design assumptions, varied in the Phase 12 ablation; not ground truth.
+version: v1
+lookback_days: 756            # ~3 years of daily returns for μ and Σ
+min_history_share: 0.8        # assets with less overlapping history than this share of the window are left out
+# Expected returns: each asset's historical mean, shrunk toward the cross-sectional mean. Raw historical means
+# are very noisy; the Phase 9 model shows no significant skill yet, so it is not used for μ (docs/model_card.md).
+mu_shrinkage: 0.75
+cov_shrinkage: 0.2            # Σ = (1 − δ)·S + δ·diag(S): steadier weights than the raw sample covariance
+risk_free_rate: 0.0           # annual return on cash (set from the 91-day T-bill once known)
+# min_variance is the default: it needs no return forecast, and historical means (even shrunk) chase recent
+# winners. balanced is kept for the ablation and labelled as forecast-driven in the UI.
+objectives:
+  balanced: { risk_aversion: 4.0 }      # maximise μ·w − λ/2 · wᵀΣw
+  min_variance: { risk_aversion: null } # minimise wᵀΣw only
+# Constraints (long only). The risky part is fully invested above the cash floor. Company and sector caps are
+# applied to effective (look-through) exposure E = H·w and are read from recommendations.yaml, so the optimiser
+# and the recommendation engine can never disagree about them.
+max_asset_weight: 0.20
+cash_floor: 0.05
+min_weight_shown: 0.005       # target weights below this are reported as 0

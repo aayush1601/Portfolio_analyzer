@@ -1,4 +1,5 @@
 import { ScoreBar } from '../charts'
+import { AllocationCard } from './Allocation'
 import { useApi, type Recommendation, type Reference, type Recommendations } from '../api'
 import { fixed } from '../format'
 import { Avatar, Card, IconAlert, Notes, Plate, Status } from '../ui'
@@ -124,6 +125,7 @@ export function Actions({ pid, reference }: { pid: string; reference: Reference 
             <span className="font-extrabold">Research insights, not advice.</span> {r.disclaimer} Backtesting of these rules is still to come, and nothing
             here guarantees profit.
           </p>
+          <AllocationCard pid={pid} reference={reference} />
           <Card
             title={`Of ${r.items.length} holdings: ${summary(r)}`}
             dek="Each score blends news, risk and how well the holding fits the portfolio, 0–100 (higher favours keeping or adding). Look-through caps can only make an insight more cautious; when one does, the original call stays visible."

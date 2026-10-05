@@ -142,6 +142,21 @@ export type Recommendations = {
   notes: string[]
 }
 
+export type Allocation = {
+  as_of: string
+  objective: 'balanced' | 'min_variance'
+  config_version: string
+  current: { expected_return: number; volatility: number }
+  target: { expected_return: number; volatility: number }
+  cash_current: number
+  cash_target: number
+  items: { asset_id: string; asset_type: AssetType; current: number; target: number; change: number; change_inr: number }[]
+  sectors: { sector: string; current: number; target: number }[]
+  binding: string[]
+  turnover: number
+  notes: string[]
+}
+
 export type Reference = {
   stocks: { symbol: string; name: string; sector: string }[]
   funds: { scheme_code: string; name: string; amc: string; category: string }[]

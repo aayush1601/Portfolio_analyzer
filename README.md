@@ -16,6 +16,7 @@ Phase 8 (news → portfolio impact) done: `GET /portfolio/{id}/news`, exposure-w
 Phase 11 basic (recommendations) done: `GET /portfolio/{id}/recommendations`, BUY/HOLD/REDUCE and INCREASE/HOLD/REDUCE/SWITCH with reasons and look-through safety caps ([config/recommendations.yaml](config/recommendations.yaml)). **MVP backend complete.**
 Phase 13 MVP pages: Look-through (default), Holdings, Risk + stress test, News, Actions at http://localhost:5173 (visual direction: `.impeccable/surfaces/`).
 Phase 9 (ML) done: point-in-time features, walk-forward ridge/RF/XGBoost vs baseline, SHAP; see the model card.
+Phase 10 (optimiser) done: `GET /portfolio/{id}/optimize`, min-variance / balanced with look-through caps ([docs/algorithms/optimizer.md](docs/algorithms/optimizer.md)); shown on Insights.
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)

@@ -13,11 +13,20 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from app.analytics.exposure import UNMAPPED, effective_exposure, latest_holdings, stress
 from app.analytics.impact import portfolio_news
+from app.analytics.optimizer import (
+    effective_sectors,
+    lookthrough_matrix,
+    optimize,
+    shrunk_cov,
+    shrunk_mu,
+    stats,
+)
 from app.analytics.portfolio import MissingPrice, value_history, value_portfolio
 from app.analytics.recommend import recommend
 from app.analytics.risk import asset_returns, risk_report
 from app.analytics.sentiment import ticker_sentiment
 from app.config import get_settings
+from app.models.allocation import AllocationItem, AllocationReport, SectorShift, Stats
 from app.models.exposure import ExposureReport, StressRequest, StressResult
 from app.models.news import PortfolioNews
 from app.models.portfolio import (
@@ -217,6 +226,96 @@ def scored_news() -> pd.DataFrame:
         return news_with_sentiment(get_settings().data_dir)
     except FileNotFoundError:  # pipeline not run yet: callers degrade to "no news"
         return pd.DataFrame(columns=["published_at", "symbols", "score", "confidence"])
+
+
+@router.get("/{portfolio_id}/optimize")
+def get_allocation(
+    portfolio_id: PortfolioId,
+    user: User,
+    store: Store,
+    objective: Annotated[str, Query(pattern="^(balanced|min_variance)$")] = "min_variance",
+) -> AllocationReport:
+    """Model allocation over the universe plus held funds, with caps on look-through exposure (Phase 10)."""
+    p = owned(store, user, portfolio_id)
+    cfg = read_config("optimizer.yaml")
+    caps = read_config("recommendations.yaml")["caps"]
+    prices, navs = load_market(date.today() - timedelta(days=int(cfg["lookback_days"] * 1.5) + 30))
+    snap = snapshot(p, prices, navs)
+    u = read_config("universe.yaml")
+    sector_of = {s["symbol"]: s["sector"] for s in u["stocks"]}
+    held = {h.asset_id: h for h in snap.holdings if h.asset_type is not AssetType.CASH}
+    candidates = set(sector_of) | {str(f["scheme_code"]) for f in u["mutual_funds"]} | set(held)
+
+    R_all = asset_returns(prices, navs)
+    R = R_all[[c for c in R_all.columns if c in candidates]].tail(cfg["lookback_days"])
+    coverage = R.notna().mean()
+    keep = sorted(coverage[coverage >= cfg["min_history_share"]].index)
+    excluded = sorted(candidates - set(keep))
+    R = R[keep].dropna()
+    notes = []
+    if dropped_held := [a for a in excluded if a in held]:
+        notes.append(f"Kept out for short price history, so held as they are: {', '.join(dropped_held)}")
+
+    mu, Sigma = shrunk_mu(R, cfg["mu_shrinkage"]), shrunk_cov(R, cfg["cov_shrinkage"])
+    holdings = latest_holdings(load_holdings(get_settings().data_dir), snap.as_of)
+    H, unknown = lookthrough_matrix(keep, set(sector_of), holdings)
+    if unknown:
+        notes.append(
+            f"{len(unknown)} funds have no holdings disclosure yet, so the caps can't see inside them"
+        )
+    mode = cfg["objectives"][objective]
+    try:
+        w, binding = optimize(
+            mu,
+            Sigma,
+            H,
+            sector_of,
+            risk_aversion=mode["risk_aversion"],
+            max_asset=cfg["max_asset_weight"],
+            cash_floor=cfg["cash_floor"],
+            caps=caps,
+        )
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
+
+    w0 = pd.Series({a: held[a].weight for a in keep if a in held}).reindex(keep, fill_value=0.0)
+    cash0 = sum(h.weight for h in snap.holdings if h.asset_type is AssetType.CASH)
+    rf = cfg["risk_free_rate"]
+    cur, tgt = stats(w0, mu, Sigma, cash0, rf), stats(w, mu, Sigma, cfg["cash_floor"], rf)
+    shown = cfg["min_weight_shown"]
+    items = [
+        AllocationItem(
+            asset_id=a,
+            asset_type="STOCK" if a in sector_of else "MF",
+            current=round(float(w0[a]), 6),
+            target=round(float(w[a]) if w[a] >= shown else 0.0, 6),
+            change=round(float((w[a] if w[a] >= shown else 0.0) - w0[a]), 6),
+            change_inr=round(float((w[a] if w[a] >= shown else 0.0) - w0[a]) * snap.total_value, 2),
+        )
+        for a in keep
+        if w0[a] >= shown or w[a] >= shown
+    ]
+    s0, s1 = effective_sectors(w0, H, sector_of), effective_sectors(w, H, sector_of)
+    sectors = [
+        SectorShift(sector=k, current=round(float(s0.get(k, 0.0)), 6), target=round(float(s1.get(k, 0.0)), 6))
+        for k in sorted(set(s0.index) | set(s1.index), key=lambda k: -max(s0.get(k, 0), s1.get(k, 0)))
+        if max(s0.get(k, 0), s1.get(k, 0)) >= shown
+    ]
+    return AllocationReport(
+        portfolio_id=p.portfolio_id,
+        as_of=snap.as_of,
+        objective=objective,
+        config_version=cfg["version"],
+        current=Stats(expected_return=cur[0], volatility=cur[1]),
+        target=Stats(expected_return=tgt[0], volatility=tgt[1]),
+        cash_current=round(cash0, 6),
+        cash_target=cfg["cash_floor"],
+        items=sorted(items, key=lambda i: -abs(i.change)),
+        sectors=sectors,
+        binding=binding,
+        turnover=round(float(((w - w0).abs().sum() + abs(cfg["cash_floor"] - cash0)) / 2), 6),
+        notes=notes,
+    )
 
 
 @router.get("/{portfolio_id}/recommendations")

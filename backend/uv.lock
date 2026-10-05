@@ -919,6 +919,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-multipart" },
     { name = "pyyaml" },
+    { name = "scipy" },
     { name = "segno" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "xlrd" },
@@ -932,7 +933,6 @@ dev = [
 ]
 ml = [
     { name = "scikit-learn" },
-    { name = "scipy" },
     { name = "shap" },
     { name = "torch" },
     { name = "transformers" },
@@ -954,6 +954,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.4" },
     { name = "python-multipart", specifier = ">=0.0.32" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "scipy", specifier = ">=1.18.1" },
     { name = "segno", specifier = ">=1.6.6" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
     { name = "xlrd", specifier = ">=2.0.2" },
@@ -967,7 +968,6 @@ dev = [
 ]
 ml = [
     { name = "scikit-learn", specifier = ">=1.9.1" },
-    { name = "scipy", specifier = ">=1.18.1" },
     { name = "shap", specifier = ">=0.52.0" },
     { name = "torch", specifier = ">=2.14.1" },
     { name = "transformers", specifier = ">=5.18.0" },
