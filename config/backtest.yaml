@@ -1,0 +1,25 @@
+# Backtest and ablation (Phase 12). Every run stores this file's contents and a data fingerprint (NFR5).
+version: v1
+start: "2018-01-01"          # first rebalance; estimates need lookback_days of history before it
+end: null                     # null = latest price date
+rebalance: monthly            # last trading day of each month
+cost_bps: 10                  # one-way cost per unit of value traded (brokerage + impact estimate)
+lookback_days: 756            # ~3 years of daily returns behind every estimate, point-in-time
+min_history_share: 0.8
+cash_floor: 0.0             # fully invested in every strategy, so A–D differ only in their layer
+benchmark: "^NSEI"
+
+# Ablation A–D: each strategy adds one layer to the one before (RQ4).
+strategies:
+  A_equal_weight: { kind: equal_weight }                         # no layers: 1/N, rebalanced monthly
+  B_min_variance: { kind: optimizer, objective: min_variance }   # + risk layer (Σ, caps)
+  C_mean_variance: { kind: optimizer, objective: balanced }      # + optimisation with return estimates (μ)
+  D_news_aware_mv: { kind: optimizer, objective: balanced, news: true }  # + news: μ tilted by sentiment
+  buy_and_hold: { kind: buy_and_hold }                           # equal weight at the start, never rebalanced
+
+# News layer: μᵢ += news_tilt · sᵢ, where sᵢ is the stock's time-decayed FinBERT score at the rebalance date,
+# shrunk by evidence (same as the recommendation engine). news_tilt is in annual return per unit sentiment.
+news_tilt: 0.10
+news_half_life_hours: 72
+
+bootstrap: { resamples: 2000, block_days: 21, seed: 0 }   # stationary-block bootstrap for Sharpe differences

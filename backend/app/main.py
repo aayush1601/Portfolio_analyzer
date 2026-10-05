@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api import funds, imports, portfolio, reference
+from app.api import backtests, funds, imports, portfolio, reference
 from app.config import get_settings
 from app.utils.log import setup_logging
 
@@ -22,6 +22,7 @@ app.include_router(portfolio.router)
 app.include_router(funds.router)
 app.include_router(reference.router)
 app.include_router(imports.router)
+app.include_router(backtests.router)
 
 
 @app.get("/health")

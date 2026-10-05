@@ -18,6 +18,7 @@ Phase 13 MVP pages: Look-through (default), Holdings, Risk + stress test, News, 
 Phase 9 (ML) done: point-in-time features, walk-forward ridge/RF/XGBoost vs baseline, SHAP; see the model card.
 Phase 10 (optimiser) done: `GET /portfolio/{id}/optimize`, min-variance / balanced with look-through caps ([docs/algorithms/optimizer.md](docs/algorithms/optimizer.md)); shown on Insights.
 Phase 11 (full decision engine) done: recommendations blend news, risk, fit and the gap to the model allocation; optimiser-driven SWITCH and additions ([docs/algorithms/decision_engine.md](docs/algorithms/decision_engine.md)).
+Phase 12 (backtest & ablation) done: A–D layer ablation, buy-and-hold and NIFTY 50, costs, block-bootstrap Sharpe tests, regime split; Backtest page and [docs/backtest_report.md](docs/backtest_report.md).
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
@@ -74,6 +75,13 @@ risk rating. The PDF and PAN are processed in memory and never stored. Funds out
 registered on import (`data/processed/extra_funds.json`, NAVs from mfapi.in) and refreshed by `nav_data`.
 To upload from a phone, scan the QR code on the Import page; the phone must be on the same Wi-Fi (the dev server
 already listens on the LAN). Each QR code carries a one-time token valid for 15 minutes.
+
+## Backtest (Phase 12)
+```bash
+cd backend && uv run python -m app.services.backtest   # ~15 s; writes data/backtests/<run_id>/ and docs/backtest_report.md
+```
+Settings in `config/backtest.yaml`; every run stores its config and a data fingerprint (NFR5). The Backtest page
+shows the latest run and can start a new one (`POST /backtest`).
 
 ## Expected-return models (Phase 9)
 ```bash

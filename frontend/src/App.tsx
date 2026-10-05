@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, useApi, type Exposure, type PortfolioSummary, type Reference, type Risk, type Snapshot } from './api'
 import { Actions } from './pages/Actions'
+import { BacktestPage } from './pages/Backtest'
 import { HoldingsEditor } from './pages/Holdings'
 import { ImportPage, PhoneImport } from './pages/Import'
 import { LookThrough } from './pages/LookThrough'
@@ -16,6 +17,7 @@ const TABS = [
   { id: 'risk', label: 'Risk' },
   { id: 'news', label: 'News' },
   { id: 'insights', label: 'Insights' },
+  { id: 'backtest', label: 'Backtest' },
 ] as const
 type Tab = (typeof TABS)[number]['id'] | 'new' | 'import'
 const ALIASES: Record<string, Tab> = { holdings: 'overview', actions: 'insights' } // links from the previous build
@@ -81,6 +83,8 @@ export default function App() {
     page = <PhoneImport token={phoneToken} />
   } else if (tab === 'import') {
     page = <ImportPage onImported={afterImport} />
+  } else if (tab === 'backtest') {
+    page = <BacktestPage />
   } else if (!reference.data) {
     page = <Status<Reference> q={reference} what="the portfolio service">{() => null}</Status>
   } else if (!portfolios.data) {
