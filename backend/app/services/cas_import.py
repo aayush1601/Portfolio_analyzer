@@ -164,7 +164,13 @@ def _get(token: str) -> dict | None:
     if table is None:
         return _tokens.get(token)
     item = table.get_item(Key={"PK": f"IMPORT#{token}", "SK": "TOKEN"}).get("Item")
-    return {"expires": float(item["expires"]), "portfolio_id": item.get("portfolio_id")} if item else None
+    if not item:
+        return None
+    return {
+        "expires": float(item["expires"]),
+        "owner": item.get("owner", "local"),
+        "portfolio_id": item.get("portfolio_id"),
+    }
 
 
 def _put(token: str, value: dict) -> None:
@@ -174,18 +180,25 @@ def _put(token: str, value: dict) -> None:
         return
     from decimal import Decimal
 
-    item = {"PK": f"IMPORT#{token}", "SK": "TOKEN", "expires": Decimal(int(value["expires"]))}
+    item = {
+        "PK": f"IMPORT#{token}",
+        "SK": "TOKEN",
+        "expires": Decimal(int(value["expires"])),
+        "owner": value.get("owner", "local"),
+    }
     if value.get("portfolio_id"):
         item["portfolio_id"] = value["portfolio_id"]
     table.put_item(Item=item)
 
 
-def new_token() -> str:
+def new_token(owner: str = "local") -> str:
+    """owner: the signed-in user who opened the session. The phone that uploads with this token carries no
+    login of its own, so the import lands in the owner's account (Phase 17)."""
     now = time.time()
     for t in [t for t, v in _tokens.items() if v["expires"] < now]:
         del _tokens[t]
     token = secrets.token_urlsafe(16)
-    _put(token, {"expires": now + TOKEN_TTL_S, "portfolio_id": None})
+    _put(token, {"expires": now + TOKEN_TTL_S, "owner": owner, "portfolio_id": None})
     return token
 
 
@@ -197,6 +210,11 @@ def check_token(token: str | None) -> bool:
 def complete_token(token: str, portfolio_id: str) -> None:
     if t := _get(token):
         _put(token, {**t, "portfolio_id": portfolio_id})
+
+
+def token_owner(token: str) -> str | None:
+    t = _get(token)
+    return t["owner"] if t and t["expires"] >= time.time() else None
 
 
 def token_result(token: str) -> str | None:

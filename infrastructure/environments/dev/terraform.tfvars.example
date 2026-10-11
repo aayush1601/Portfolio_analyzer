@@ -1,2 +1,0 @@
-# Copy to terraform.tfvars (gitignored). image_tag is passed by scripts/deploy.sh.
-alert_email = "you@example.com"

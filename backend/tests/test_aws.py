@@ -173,9 +173,23 @@ def test_news_impact_alerts_by_sns_and_records_the_alert(aws, monkeypatch):
 def test_import_tokens_live_in_dynamodb_so_any_container_sees_them(aws):
     from app.services import cas_import as cas
 
-    token = cas.new_token()
+    token = cas.new_token(owner="user-sub-1")
     cas._tokens.clear()  # a different container: nothing in memory
     assert cas.check_token(token) and cas.token_result(token) is None
+    assert cas.token_owner(token) == "user-sub-1"  # the phone's upload lands in this account
     cas.complete_token(token, "abc123abc123")
     assert cas.token_result(token) == "abc123abc123"
     assert not cas.check_token("nope")
+
+
+def test_secrets_come_from_ssm_and_skip_the_placeholder(aws, monkeypatch):
+    ssm = boto3.client("ssm")
+    ssm.put_parameter(Name="/pi-test/secrets/ALPHAVANTAGE_API_KEY", Value="k-123", Type="SecureString")
+    ssm.put_parameter(Name="/pi-test/secrets/UNUSED", Value="unset", Type="SecureString")
+    monkeypatch.setenv("SSM_SECRETS_PATH", "/pi-test/secrets/")
+    get_settings.cache_clear()
+    try:
+        s = get_settings()
+        assert s.alphavantage_api_key.get_secret_value() == "k-123" and s.storage == "s3"
+    finally:
+        get_settings.cache_clear()

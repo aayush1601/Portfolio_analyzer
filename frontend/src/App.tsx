@@ -8,6 +8,7 @@ import { LookThrough } from './pages/LookThrough'
 import { NewsPage } from './pages/News'
 import { Overview } from './pages/Overview'
 import { RiskPage } from './pages/Risk'
+import { authEnabled, signOut } from './auth'
 import { PlateContext, usePlates } from './plates'
 import { Card, IconPlus, Mark, Status } from './ui'
 
@@ -23,7 +24,7 @@ type Tab = (typeof TABS)[number]['id'] | 'new' | 'import'
 const ALIASES: Record<string, Tab> = { holdings: 'overview', actions: 'insights' } // links from the previous build
 
 function parseHash(): [Tab, string | null] {
-  const [, raw, pid] = window.location.hash.split('/')
+  const [, raw, pid] = window.location.hash.split('?')[0].split('/') // ?view=… is page state, not route
   const tab = ALIASES[raw] ?? raw
   return [(TABS.some((x) => x.id === tab) || tab === 'new' || tab === 'import' ? tab : 'overview') as Tab, pid || null]
 }
@@ -110,7 +111,7 @@ export default function App() {
   } else if (tab === 'overview') {
     page = (
       <Status q={snap} what="your portfolio">
-        {(s) => <Overview snap={s} exposure={exposure.data} risk={risk.data} reference={reference.data!} pid={pid} onSaved={refresh} />}
+        {(s) => <Overview snap={s} exposure={exposure} risk={risk} reference={reference.data!} pid={pid} onSaved={refresh} />}
       </Status>
     )
   } else if (tab === 'look-through') {
@@ -181,6 +182,11 @@ export default function App() {
               >
                 <IconPlus className="size-3.5" title="New portfolio" /> <span className="hidden sm:inline">New portfolio</span>
               </button>
+              {authEnabled && (
+                <button onClick={signOut} className="no-print shrink-0 px-1 text-[0.85rem] font-bold whitespace-nowrap text-ink-2 hover:text-ink">
+                  Sign out
+                </button>
+              )}
             </div>
           </div>
         </header>

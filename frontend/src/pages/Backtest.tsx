@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useApi } from '../api'
+import { apiFetch, useApi } from '../api'
 import { fixed, pct, signed } from '../format'
 import { Button, Card, Chip, IconRefresh, Status } from '../ui'
 
@@ -224,7 +224,7 @@ export function BacktestPage() {
   async function runAgain() {
     setStarting(true)
     try {
-      await fetch('/api/backtest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      await apiFetch('/backtest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
       setRunId(null)
       reload()
     } finally {

@@ -5,7 +5,10 @@
 variable "name" { type = string }
 variable "backend_repository_url" { type = string }
 variable "image_tag" { type = string }
-variable "role_arn" { type = string }
+variable "policy_json" {
+  type        = string
+  description = "IAM policy of the pipeline functions (separate from the API's: least privilege, Phase 17)"
+}
 variable "environment" { type = map(string) }
 variable "alert_email" {
   type    = string
@@ -17,6 +20,31 @@ variable "log_retention_days" {
 }
 
 resource "aws_cloudwatch_event_bus" "pipeline" { name = "${var.name}-pipeline" }
+
+data "aws_iam_policy_document" "lambda_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "jobs" {
+  name               = "${var.name}-jobs"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+}
+
+resource "aws_iam_role_policy_attachment" "jobs_logs" {
+  role       = aws_iam_role.jobs.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "jobs" {
+  role   = aws_iam_role.jobs.id
+  policy = var.policy_json
+}
 
 resource "aws_sns_topic" "alerts" { name = "${var.name}-alerts" }
 
@@ -80,7 +108,7 @@ resource "aws_cloudwatch_log_group" "job" {
 resource "aws_lambda_function" "job" {
   for_each      = local.jobs
   function_name = "${var.name}-${replace(each.key, "_", "-")}"
-  role          = var.role_arn
+  role          = aws_iam_role.jobs.arn
   package_type  = "Image"
   image_uri     = "${var.backend_repository_url}:${var.image_tag}"
   architectures = ["arm64"]
@@ -94,7 +122,7 @@ resource "aws_lambda_function" "job" {
 
 resource "aws_lambda_function" "news_score" {
   function_name                  = "${var.name}-news-score"
-  role                           = var.role_arn
+  role                           = aws_iam_role.jobs.arn
   package_type                   = "Image"
   image_uri                      = "${aws_ecr_repository.finbert.repository_url}:${var.image_tag}"
   architectures                  = ["arm64"]
@@ -108,6 +136,7 @@ resource "aws_lambda_function" "news_score" {
 }
 
 resource "aws_lambda_event_source_mapping" "news" {
+  depends_on                         = [aws_iam_role_policy.jobs] # SQS polling needs the policy first
   event_source_arn                   = aws_sqs_queue.news.arn
   function_name                      = aws_lambda_function.news_score.arn
   batch_size                         = 16
@@ -191,23 +220,15 @@ resource "aws_lambda_permission" "reaction" {
   source_arn    = aws_cloudwatch_event_rule.reaction[each.key].arn
 }
 
-# Anything in the DLQ means a batch failed 3 times: tell someone.
-resource "aws_cloudwatch_metric_alarm" "dlq" {
-  alarm_name          = "${var.name}-news-dlq-not-empty"
-  namespace           = "AWS/SQS"
-  metric_name         = "ApproximateNumberOfMessagesVisible"
-  dimensions          = { QueueName = aws_sqs_queue.news_dlq.name }
-  statistic           = "Maximum"
-  period              = 300
-  evaluation_periods  = 1
-  threshold           = 0
-  comparison_operator = "GreaterThanThreshold"
-  alarm_actions       = [aws_sns_topic.alerts.arn]
-  treat_missing_data  = "notBreaching"
-}
+# Alarms (the DLQ included) are in the monitoring module.
 
 output "finbert_repository_url" { value = aws_ecr_repository.finbert.repository_url }
 output "event_bus" { value = aws_cloudwatch_event_bus.pipeline.name }
 output "news_queue_url" { value = aws_sqs_queue.news.url }
 output "news_queue_arn" { value = aws_sqs_queue.news.arn }
 output "alerts_topic_arn" { value = aws_sns_topic.alerts.arn }
+output "function_names" {
+  value = merge({ for k, f in aws_lambda_function.job : k => f.function_name }, { news_score = aws_lambda_function.news_score.function_name })
+}
+output "news_queue_name" { value = aws_sqs_queue.news.name }
+output "news_dlq_name" { value = aws_sqs_queue.news_dlq.name }

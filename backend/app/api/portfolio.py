@@ -9,7 +9,7 @@ from typing import Annotated
 
 import pandas as pd
 import yaml
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 
 from app.analytics.exposure import UNMAPPED, effective_exposure, latest_holdings, stress
 from app.analytics.impact import portfolio_news
@@ -51,8 +51,17 @@ router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 PortfolioId = Annotated[str, Path(pattern=PID_PATTERN)]
 
 
-def current_user() -> str:
-    return "local"  # local stub (FR1); Phase 17 takes this from the verified Cognito JWT `sub`
+def current_user(request: Request) -> str:
+    """The Cognito user id (`sub`). On AWS, API Gateway's JWT authorizer has already verified the token's
+    signature, issuer, audience and expiry before the request reaches Lambda; Mangum passes its claims on.
+    Locally there is no login and everything belongs to "local"."""
+    event = request.scope.get("aws.event") or {}
+    claims = event.get("requestContext", {}).get("authorizer", {}).get("jwt", {}).get("claims", {})
+    if sub := claims.get("sub"):
+        return sub
+    if get_settings().auth_required:  # defence in depth: never fall back to a shared account on AWS
+        raise HTTPException(401, "Sign in to continue.")
+    return "local"
 
 
 @lru_cache

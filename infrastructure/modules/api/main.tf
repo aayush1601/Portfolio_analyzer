@@ -4,7 +4,7 @@ variable "image_tag" { type = string }
 variable "environment" { type = map(string) }
 variable "policy_json" {
   type        = string
-  description = "IAM policy shared by the backend functions"
+  description = "IAM policy of the API function only (the pipeline jobs have their own role)"
 }
 variable "log_retention_days" {
   type    = number
@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "assume" {
 }
 
 resource "aws_iam_role" "backend" {
-  name               = "${var.name}-backend"
+  name               = "${var.name}-api"
   assume_role_policy = data.aws_iam_policy_document.assume.json
 }
 
@@ -83,11 +83,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "all" {
-  api_id    = aws_apigatewayv2_api.http.id
-  route_key = "$default"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
-}
+# Routes, and which of them need a signed-in user, live in the auth module (Phase 17).
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http.id
@@ -108,6 +104,8 @@ resource "aws_lambda_permission" "apigw" {
 }
 
 output "repository_url" { value = aws_ecr_repository.app.repository_url }
-output "role_arn" { value = aws_iam_role.backend.arn }
+output "api_id" { value = aws_apigatewayv2_api.http.id }
+output "integration_id" { value = aws_apigatewayv2_integration.lambda.id }
+output "function_name" { value = aws_lambda_function.api.function_name }
 output "api_domain" { value = replace(aws_apigatewayv2_api.http.api_endpoint, "https://", "") }
 output "api_endpoint" { value = aws_apigatewayv2_api.http.api_endpoint }

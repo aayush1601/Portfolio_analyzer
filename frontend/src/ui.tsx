@@ -42,7 +42,7 @@ export function Delta({ value, children, className = '' }: { value: number; chil
   const tone = value > 0 ? 'text-brand-ink' : value < 0 ? 'text-loss' : 'text-ink-2'
   return (
     <span className={`num inline-flex items-center gap-1 whitespace-nowrap ${tone} ${className}`}>
-      {Icon && <Icon className="size-2.5" title={value > 0 ? 'up' : 'down'} />}
+      {Icon && <Icon className="size-[max(0.75rem,0.8em)] shrink-0" title={value > 0 ? 'up' : 'down'} />}
       {children}
     </span>
   )
@@ -51,7 +51,7 @@ export function Delta({ value, children, className = '' }: { value: number; chil
 // ---------- company identity ----------
 const AVATAR_TONES = [
   'bg-accent-soft text-accent-ink',
-  'bg-brand-soft text-brand-ink',
+  'bg-brand-soft text-brand-deep',
   'bg-via-soft text-via-ink',
   'bg-line-soft text-ink-2',
 ]
@@ -172,23 +172,36 @@ export function Segmented<T extends string | number>({
   value,
   onChange,
   label,
+  size = 'md',
 }: {
   options: { value: T; label: string }[]
   value: T
   onChange: (v: T) => void
   label: string
+  size?: 'md' | 'lg'
 }) {
+  const at = options.findIndex((o) => o.value === value)
+  function onKey(e: React.KeyboardEvent<HTMLDivElement>) {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]
+    const next = e.key === 'Home' ? 0 : e.key === 'End' ? options.length - 1 : step === undefined ? null : (at + step + options.length) % options.length
+    if (next === null) return
+    e.preventDefault()
+    onChange(options[next].value)
+    ;(e.currentTarget.children[next] as HTMLElement | undefined)?.focus()
+  }
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap gap-1 rounded-full bg-line-soft p-1">
-      {options.map((o) => {
+    <div role="radiogroup" aria-label={label} onKeyDown={onKey} className="inline-flex flex-wrap gap-1 rounded-full bg-line-soft p-1">
+      {options.map((o, i) => {
         const on = o.value === value
         return (
           <button
             key={String(o.value)}
+            type="button"
             role="radio"
             aria-checked={on}
+            tabIndex={on || (at < 0 && i === 0) ? 0 : -1}
             onClick={() => onChange(o.value)}
-            className={`rounded-full px-3 py-1 text-[0.82rem] font-bold whitespace-nowrap transition-colors ${
+            className={`rounded-full font-bold whitespace-nowrap transition-colors ${size === 'lg' ? 'px-4 py-2 text-[0.95rem]' : 'px-3 py-1 text-[0.82rem]'} ${
               on ? 'bg-panel text-ink shadow-[0_1px_3px_rgb(30_34_53/0.12)]' : 'text-ink-2 hover:text-ink'
             }`}
           >
@@ -203,7 +216,7 @@ export function Segmented<T extends string | number>({
 type Tone = 'neutral' | 'gain' | 'loss' | 'accent' | 'via'
 const CHIP: Record<Tone, string> = {
   neutral: 'bg-line-soft text-ink-2',
-  gain: 'bg-brand-soft text-brand-ink',
+  gain: 'bg-brand-soft text-brand-deep',
   loss: 'bg-loss-soft text-loss',
   accent: 'bg-accent-soft text-accent-ink',
   via: 'bg-via-soft text-via-ink',

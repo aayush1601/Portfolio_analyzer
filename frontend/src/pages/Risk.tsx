@@ -11,6 +11,8 @@ const LOOKBACKS = [
   { days: 1260, label: '5 years' },
 ]
 const SHORT: Record<number, string> = { 63: '3M', 252: '1Y', 756: '3Y', 1260: '5Y' }
+const describe = (rows: { sector: string; shock: string }[]) =>
+  rows.map((r) => `${r.sector} ${Number(r.shock) < 0 ? 'falls' : 'rises'} ${Math.abs(Number(r.shock))}%`).join(' and ')
 const field =
   'rounded-lg border border-line bg-panel px-3 py-2 text-[0.9rem] font-medium text-ink hover:border-ink-3 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
 
@@ -27,7 +29,9 @@ function Metric({ label, value, help }: { label: string; value: string; help: st
 function Stress({ pid, reference }: { pid: string; reference: Reference }) {
   const sectors = [...new Set(reference.stocks.map((s) => s.sector))].sort()
   const [rows, setRows] = useState([{ sector: 'Information Technology', shock: '-10' }])
-  const [result, setResult] = useState<StressResult | null>(null)
+  // The scenario travels with its result, so editing the form never relabels an old answer.
+  const [ran, setRan] = useState<{ result: StressResult; scenario: string } | null>(null)
+  const result = ran?.result
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -35,7 +39,7 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
   useEffect(() => {
     let live = true
     api<StressResult>(`/portfolio/${pid}/stress`, { method: 'POST', body: JSON.stringify({ shocks: { 'Information Technology': -0.1 } }) })
-      .then((r) => live && setResult(r))
+      .then((r) => live && setRan({ result: r, scenario: describe([{ sector: 'Information Technology', shock: '-10' }]) }))
       .catch(() => {})
     return () => {
       live = false
@@ -45,11 +49,12 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
   async function run(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (rows.some((r) => r.shock.trim() === '' || Number.isNaN(Number(r.shock)))) return setError('Each shock must be a number, e.g. −10 for a 10% fall.')
+    if (new Set(rows.map((r) => r.sector)).size < rows.length) return setError('Each sector can appear once. Remove the repeat or pick another sector.')
     const shocks = Object.fromEntries(rows.map((r) => [r.sector, Number(r.shock) / 100]))
-    if (Object.values(shocks).some((v) => Number.isNaN(v))) return setError('Each shock must be a number, e.g. −10 for a 10% fall.')
     setBusy(true)
     try {
-      setResult(await api<StressResult>(`/portfolio/${pid}/stress`, { method: 'POST', body: JSON.stringify({ shocks }) }))
+      setRan({ result: await api<StressResult>(`/portfolio/${pid}/stress`, { method: 'POST', body: JSON.stringify({ shocks }) }), scenario: describe(rows) })
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -57,12 +62,11 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
     }
   }
 
-  const scenario = rows.map((r) => `${r.sector} ${Number(r.shock) > 0 ? '+' : ''}${r.shock}%`).join(', ')
   return (
     <Card
       title={
-        result
-          ? `If ${scenario}, what’s visible of this portfolio would move about ${signedPct(result.estimated_loss)}: ${inr(result.estimated_loss_inr)}.`
+        ran
+          ? `If ${ran.scenario}, what’s visible of this portfolio would move about ${signedPct(ran.result.estimated_loss)} (${inr(ran.result.estimated_loss_inr)}).`
           : 'What a sector shock would do to this portfolio'
       }
       dek={
@@ -81,7 +85,7 @@ function Stress({ pid, reference }: { pid: string; reference: Reference }) {
               <input aria-label={`Shock ${i + 1} percent`} inputMode="decimal" className={`${field} num w-20 text-right`} value={r.shock} onChange={(e) => setRows((x) => x.map((y, j) => (j === i ? { ...y, shock: e.target.value } : y)))} />
               <span className="text-ink-2">%</span>
             </label>
-            <button type="button" aria-label={`Remove shock ${i + 1}`} className="p-1 text-ink-3 hover:text-ink disabled:opacity-40" disabled={rows.length === 1} onClick={() => setRows((x) => x.filter((_, j) => j !== i))}>
+            <button type="button" aria-label={`Remove shock ${i + 1}`} className="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-line-soft hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none disabled:opacity-40 disabled:hover:bg-transparent" disabled={rows.length === 1} onClick={() => setRows((x) => x.filter((_, j) => j !== i))}>
               <IconTrash />
             </button>
           </div>
@@ -167,7 +171,7 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
   const [confidence, setConfidence] = useState(0.95)
   const q = useApi<Risk>(`/portfolio/${pid}/risk?lookback_days=${lookback}&confidence=${confidence}`)
   const odds = Math.round(1 / (1 - confidence))
-  const window = LOOKBACKS.find((l) => l.days === lookback)!.label
+  const span = LOOKBACKS.find((l) => l.days === lookback)!.label
 
   const controls = (
     <div className="no-print flex flex-wrap gap-2">
@@ -182,7 +186,7 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
         {(r) => (
           <Card
             title={`Risk score ${r.risk_score} of 100, ${r.risk_band.toLowerCase()}. On a bad day (1\u00a0in\u00a0${odds}) this portfolio loses about ${pct(r.var_1d.historical)} or more.`}
-            dek={`Today’s weights applied to the last ${r.observations} trading days (${window}). Cash counts as risk-free.`}
+            dek={`Today’s weights applied to the last ${r.observations} trading days (${span}). Cash counts as risk-free.`}
             aside={controls}
             source={
               <>
@@ -201,23 +205,27 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
                 <p className="mt-1 text-[0.8rem] text-ink-3">Each bar counts the days with that return; hatched bars are the bad-day tail.</p>
               </div>
             </div>
-            <div className="mb-1 h-5" />
-            <dl className="mt-5 grid gap-x-8 md:grid-cols-2">
+            <div className="mt-8 grid gap-x-8 md:grid-cols-2">
               <div>
                 <h3 className="border-b border-line pb-2 text-[1rem] font-extrabold text-ink">Return and swings</h3>
+                <dl>
                 <Metric label="Annual return" value={signedPct(r.return_ann)} help="Average daily return × 252." />
                 <Metric label="Volatility" value={pct(r.volatility_ann)} help="How much the value swings in a typical year." />
                 <Metric label="Sharpe ratio" value={fixed(r.sharpe)} help={`Return above the ${pct(r.risk_free_rate)} risk-free rate per unit of volatility.`} />
                 <Metric label="Sortino ratio" value={fixed(r.sortino)} help="Like Sharpe, but only counts downside swings." />
+                </dl>
                 <h3 className="mt-6 border-b border-line pb-2 text-[1rem] font-extrabold text-ink">Market and concentration</h3>
+                <dl>
                 <Metric label="Beta" value={fixed(r.beta)} help="Moves this much for every 1% the NIFTY 50 moves." />
                 <Metric label="Average correlation" value={r.avg_correlation === null ? 'n/a' : fixed(r.avg_correlation)} help="How alike your holdings move (1 = identical)." />
                 <Metric label="Concentration (direct)" value={fixed(r.hhi_direct, 3)} help="HHI of what you hold directly: 1/N for N equal holdings." />
                 {r.hhi_effective !== null && <Metric label="Concentration (look-through)" value={fixed(r.hhi_effective, 3)} help="HHI once funds are opened up." />}
                 <Metric label="Diversification" value={`${r.diversification_score}/100`} help={`Diversification ratio ${fixed(r.diversification_ratio)}: how much mixing holdings cancels swings.`} />
+                </dl>
               </div>
-              <div>
+              <div className="mt-6 md:mt-0">
                 <h3 className="border-b border-line pb-2 text-[1rem] font-extrabold text-ink">Losses</h3>
+                <dl>
                 <Metric
                   label="Worst fall"
                   value={pct(r.max_drawdown)}
@@ -226,9 +234,10 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
                 <Metric label="1-day VaR, historical" value={pct(r.var_1d.historical)} help={`Loss exceeded on 1 day in ${odds}, read from past days.`} />
                 <Metric label="1-day VaR, parametric" value={pct(r.var_1d.parametric)} help="Same, assuming returns are normally distributed." />
                 <Metric label="1-day VaR, Monte Carlo" value={pct(r.var_1d.monte_carlo)} help="Same, from 10,000 simulated days (seeded)." />
-                <Metric label="Expected shortfall (CVaR)" value={pct(r.cvar_1d)} help="Average loss on those 1-in-N bad days." />
+                <Metric label="Expected shortfall (CVaR)" value={pct(r.cvar_1d)} help={`Average loss on those 1-in-${odds} bad days.`} />
+                </dl>
               </div>
-            </dl>
+            </div>
           </Card>
         )}
       </Status>

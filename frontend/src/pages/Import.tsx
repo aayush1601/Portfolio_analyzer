@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Riskometer } from '../charts'
-import { ApiError, useApi, type Risk } from '../api'
+import { ApiError, apiFetch, useApi, type Risk } from '../api'
 import { inr, pct, signedInr } from '../format'
 import { Avatar, Button, Card, Chip, IconArrow, Notes, Status } from '../ui'
 
@@ -17,7 +17,7 @@ const field =
   'w-full rounded-lg border border-line bg-panel px-3 py-2 text-[0.9rem] font-medium text-ink hover:border-ink-3 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
 
 async function upload(form: FormData): Promise<ImportResult> {
-  const r = await fetch('/api/import', { method: 'POST', body: form })
+  const r = await apiFetch('/import', { method: 'POST', body: form })
   const body = await r.json().catch(() => null)
   if (!r.ok) throw new ApiError(typeof body?.detail === 'string' ? body.detail : `Import failed (HTTP ${r.status})`)
   return body
@@ -216,7 +216,7 @@ export function ImportPage({ onImported }: { onImported: () => void }) {
     const { protocol, origin, port } = window.location
     // Deployed (https): the QR opens this same public site. Local: the server builds a LAN address instead.
     const query = protocol === 'https:' ? `origin=${encodeURIComponent(origin)}` : `port=${port || 80}`
-    fetch(`/api/import/session?${query}`, { method: 'POST' })
+    apiFetch(`/import/session?${query}`, { method: 'POST' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then(setSession)
       .catch((e: Error) => setSessionError(e.message))
@@ -226,7 +226,7 @@ export function ImportPage({ onImported }: { onImported: () => void }) {
   useEffect(() => {
     if (!session || result || phonePid) return
     const id = window.setInterval(async () => {
-      const s = await fetch(`/api/import/session/${session.token}`).then((r) => r.json()).catch(() => null)
+      const s = await apiFetch(`/import/session/${session.token}`).then((r) => r.json()).catch(() => null)
       if (s?.portfolio_id) setPhonePid(s.portfolio_id)
     }, 2000)
     return () => window.clearInterval(id)

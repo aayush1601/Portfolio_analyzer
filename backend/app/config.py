@@ -1,7 +1,8 @@
 """Application settings, read from environment variables (and the repo-root .env locally).
 
-On AWS the same variables are set on each Lambda by Terraform (infrastructure/); secrets come from SSM
-Parameter Store (Phase 17).
+On AWS the same variables are set on each Lambda by Terraform (infrastructure/). Secrets never sit in Lambda
+environment variables: they are SecureString parameters under SSM_SECRETS_PATH, read once per container
+(Phase 17; Parameter Store rather than Secrets Manager because it is free at this scale, plan §12).
 """
 
 from functools import lru_cache
@@ -33,7 +34,27 @@ class Settings(BaseSettings):
     news_queue_url: str | None = None
     alerts_topic_arn: str | None = None
 
+    # Phase 17. auth_required: refuse requests without a verified Cognito identity (set on AWS).
+    auth_required: bool = False
+    ssm_secrets_path: str | None = None  # e.g. /pi-dev/secrets/ → alphavantage_api_key
+
+
+def ssm_secrets(path: str) -> dict[str, str]:
+    """SecureString parameters under `path`, keyed by their lower-cased last segment."""
+    import boto3
+
+    pages = (
+        boto3.client("ssm").get_paginator("get_parameters_by_path").paginate(Path=path, WithDecryption=True)
+    )
+    # Terraform creates each parameter with the placeholder "unset"; the real value is put by hand.
+    params = [p for page in pages for p in page["Parameters"] if p["Value"] != "unset"]
+    return {p["Name"].rsplit("/", 1)[-1].lower(): p["Value"] for p in params}
+
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    s = Settings()
+    if s.ssm_secrets_path:
+        found = ssm_secrets(s.ssm_secrets_path)
+        s = Settings(**{k: v for k, v in found.items() if k in Settings.model_fields})
+    return s

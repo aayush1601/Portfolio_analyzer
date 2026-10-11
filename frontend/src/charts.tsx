@@ -32,7 +32,7 @@ export function ValueChart({ points, invested }: { points: { date: string; value
   return (
     <figure>
       <div
-        className="relative h-56 touch-none select-none sm:h-64"
+        className="relative h-56 touch-none select-none sm:h-64 lg:h-96"
         onPointerMove={onMove}
         onPointerLeave={() => setHover(null)}
         role="img"
@@ -148,17 +148,22 @@ export function Dumbbell({
   rows,
   cap,
   unseen = [],
+  compact = false,
 }: {
   rows: { symbol: string; direct: number; effective: number }[]
   cap: number
   unseen?: { label: string; weight: number }[]
+  /** Narrow containers: the name sits above its track at every width. */
+  compact?: boolean
 }) {
   const max = Math.max(cap, ...rows.map((r) => r.effective), ...unseen.map((u) => u.weight)) * 1.12
-  const grid = 'grid grid-cols-[1fr_5.5rem] items-center gap-x-3 gap-y-0.5 sm:grid-cols-[minmax(7rem,11rem)_1fr_6.5rem]'
+  const wide = compact ? '' : ' sm:grid-cols-[minmax(7rem,11rem)_1fr_6.5rem]'
+  const grid = `grid ${compact ? 'grid-cols-[1fr_6.75rem]' : 'grid-cols-[1fr_5.5rem]'} items-center gap-x-3 gap-y-0.5${wide}`
+  const nameCol = compact ? 'col-span-2' : 'col-span-2 sm:col-span-1'
   return (
     <div role="list" className="space-y-2">
       <div className={`${grid} text-[0.72rem] font-bold text-ink-3`}>
-        <span className="hidden sm:block" />
+        <span className={compact ? 'hidden' : 'hidden sm:block'} />
         <div className="relative h-4">
           <span className="absolute left-0">0%</span>
           <span className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: at(cap, max) }}>
@@ -172,7 +177,7 @@ export function Dumbbell({
         const via = r.effective - r.direct
         return (
           <div role="listitem" key={r.symbol} className={grid} aria-label={`${r.symbol}: direct ${pct(r.direct)}, effective ${pct(r.effective)}`}>
-            <span className="col-span-2 truncate text-[0.9rem] sm:col-span-1">
+            <span className={`${nameCol} truncate text-[0.9rem]`}>
               <Plate id={r.symbol} compact />
             </span>
             <Track max={max} cap={cap}>
@@ -210,7 +215,7 @@ export function Dumbbell({
       })}
       {unseen.map((u) => (
         <div role="listitem" key={u.label} className={`${grid} border-t border-dashed border-line pt-2`} aria-label={`${u.label}: ${pct(u.weight)}, holdings not yet visible`}>
-          <span className="col-span-2 truncate text-[0.9rem] text-ink-2 italic sm:col-span-1" title={u.label}>
+          <span className={`${nameCol} truncate text-[0.9rem] text-ink-2 italic`} title={u.label}>
             {u.label}
           </span>
           <Track max={max} cap={cap}>

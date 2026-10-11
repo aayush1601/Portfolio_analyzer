@@ -1,0 +1,123 @@
+# Phase 16: continuous deployment. A push to main deploys dev; prod is deployed by hand
+# (Actions → Deploy → Run workflow → prod) and waits for a reviewer, because the "prod" GitHub environment has
+# required reviewers. AWS access is OIDC: the job assumes the role made by infrastructure/bootstrap, whose trust
+# policy accepts only this repository's dev and prod environments. No AWS keys are stored in GitHub.
+#
+# Repository variables (Settings → Secrets and variables → Actions → Variables):
+#   AWS_DEPLOY_ROLE_ARN   output deploy_role_arn of infrastructure/bootstrap
+#   ALERT_EMAIL           receives budget, news and ops emails
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Environment
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.env || 'dev' }}
+  cancel-in-progress: false # never interrupt a terraform apply
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env || 'dev' }}
+    permissions:
+      contents: read
+      id-token: write # lets the job request the OIDC token AWS trusts
+    env:
+      ENV: ${{ inputs.env || 'dev' }}
+      AWS_REGION: ap-south-1
+      TAG: ${{ github.sha }}
+      TF_IN_AUTOMATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false # plain stdout, so `terraform output -raw` can be captured
+
+      - name: terraform init
+        run: |
+          ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          echo "TF_VAR_env=$ENV" >> "$GITHUB_ENV"
+          echo "TF_VAR_image_tag=$TAG" >> "$GITHUB_ENV"
+          echo "TF_VAR_alert_email=${{ vars.ALERT_EMAIL }}" >> "$GITHUB_ENV"
+          terraform -chdir=infrastructure/environments init -input=false \
+            -backend-config="bucket=pi-tfstate-$ACCOUNT" -backend-config="key=$ENV/terraform.tfstate" \
+            -backend-config="region=$AWS_REGION" -backend-config="use_lockfile=true"
+
+      - name: Image registries
+        run: |
+          terraform -chdir=infrastructure/environments apply -input=false -auto-approve \
+            -target=module.api.aws_ecr_repository.app -target=module.pipeline.aws_ecr_repository.finbert
+          echo "BACKEND_REPO=$(terraform -chdir=infrastructure/environments output -raw backend_repository_url)" >> "$GITHUB_ENV"
+          echo "FINBERT_REPO=$(terraform -chdir=infrastructure/environments output -raw finbert_repository_url)" >> "$GITHUB_ENV"
+
+      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-qemu-action@v3 # the Lambdas are arm64; the runner is x86
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/lambda.Dockerfile
+          platforms: linux/arm64
+          provenance: false # Lambda rejects image indexes with attestations
+          push: true
+          tags: ${{ env.BACKEND_REPO }}:${{ env.TAG }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: FinBERT image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/lambda-finbert.Dockerfile
+          platforms: linux/arm64
+          provenance: false
+          push: true
+          tags: ${{ env.FINBERT_REPO }}:${{ env.TAG }}
+          cache-from: type=gha,scope=finbert
+          cache-to: type=gha,scope=finbert,mode=max
+
+      - name: terraform plan
+        run: terraform -chdir=infrastructure/environments plan -input=false -out=tfplan
+
+      - name: terraform apply
+        run: terraform -chdir=infrastructure/environments apply -input=false tfplan
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend
+        run: |
+          TF="terraform -chdir=infrastructure/environments"
+          export VITE_COGNITO_DOMAIN="$($TF output -raw login_domain)"
+          export VITE_COGNITO_CLIENT_ID="$($TF output -raw client_id)"
+          (cd frontend && npm ci && npm run build)
+          aws s3 sync frontend/dist "s3://$($TF output -raw web_bucket)" --delete
+          aws cloudfront create-invalidation --distribution-id "$($TF output -raw distribution_id)" --paths "/*" > /dev/null
+          echo "Deployed $ENV: $($TF output -raw url)" >> "$GITHUB_STEP_SUMMARY"

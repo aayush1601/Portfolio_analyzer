@@ -33,11 +33,12 @@ def lan_ip() -> str:
 
 @router.post("/session")
 def open_session(
+    user: User,
     port: Annotated[int, Query(ge=1, le=65535)] = 5173,
     origin: Annotated[str | None, Query(pattern=r"^https://[A-Za-z0-9.-]+$")] = None,
 ) -> dict:
     """origin: the page's own https origin (deployed); without it the QR uses this machine's LAN address."""
-    token = cas.new_token()
+    token = cas.new_token(owner=user)
     base = origin or f"http://{lan_ip()}:{port}"
     url = f"{base}/#/import/{token}"
     svg = segno.make(url, error="m").svg_inline(scale=5, dark="#1e2235", light="#ffffff", border=2)
@@ -51,14 +52,15 @@ def session_status(token: str) -> dict:
 
 @router.post("", status_code=201)
 async def import_cas(
-    user: User,
     store: Store,
     file: Annotated[UploadFile, File(description="CAS PDF from CAMS, KFintech or MF Central")],
     password: Annotated[str, Form(max_length=64)],
     token: Annotated[str, Form(max_length=64)],
     name: Annotated[str, Form(max_length=100)] = "",
 ) -> dict:
-    if not cas.check_token(token):
+    # No login on this route (the phone has none): the token names the account it imports into.
+    user = cas.token_owner(token)
+    if user is None:
         raise HTTPException(
             403, "This import link has expired. Open Import again on your laptop for a fresh code."
         )

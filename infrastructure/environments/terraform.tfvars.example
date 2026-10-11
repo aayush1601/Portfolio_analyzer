@@ -1,0 +1,2 @@
+# Copy to terraform.tfvars (gitignored) for manual runs. env and image_tag are passed by scripts/deploy.sh and CI.
+alert_email = "you@example.com"

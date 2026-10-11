@@ -1,5 +1,6 @@
 // Typed client for the FastAPI backend (docs/api/openapi.yaml). Vite proxies /api to it in dev.
 import { useCallback, useEffect, useState } from 'react'
+import { accessToken, authEnabled, signIn } from './auth'
 
 export type AssetType = 'STOCK' | 'MF' | 'CASH'
 
@@ -167,11 +168,20 @@ export type Reference = {
 
 export class ApiError extends Error {}
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+/** fetch() for the backend: adds /api and, when signed in, the access token API Gateway's authorizer checks. */
+export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  const token = await accessToken()
   const r = await fetch(`/api${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    // A custom header, because CloudFront doesn't pass Authorization to an uncached origin.
+    headers: { ...(token ? { 'X-Access-Token': token } : {}), ...init?.headers },
   })
+  if (r.status === 401 && authEnabled && !location.hash.startsWith('#/import/')) await signIn()
+  return r
+}
+
+export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const r = await apiFetch(path, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers } })
   if (!r.ok) {
     const body = await r.json().catch(() => null)
     const detail = body?.detail
