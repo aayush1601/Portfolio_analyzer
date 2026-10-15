@@ -98,7 +98,14 @@ def news_ingest(event, context):
             sqs.send_message_batch(
                 QueueUrl=s.news_queue_url,
                 Entries=[
-                    {"Id": str(j), "MessageBody": json.dumps(m)} for j, m in enumerate(messages[i : i + 10])
+                    # One group → strictly one batch at a time (single writer); news_id makes resends idempotent.
+                    {
+                        "Id": str(j),
+                        "MessageBody": json.dumps(m),
+                        "MessageGroupId": "news",
+                        "MessageDeduplicationId": str(m["news_id"]),
+                    }
+                    for j, m in enumerate(messages[i : i + 10])
                 ],
             )
     return {"queued": len(messages)}

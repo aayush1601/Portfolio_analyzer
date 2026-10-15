@@ -55,13 +55,17 @@ resource "aws_sns_topic_subscription" "email" {
   endpoint  = var.alert_email # AWS emails a confirmation link first
 }
 
+# FIFO with a single message group: Lambda hands the scorer one batch at a time, so sentiment.parquet has one
+# writer without reserving Lambda concurrency (new accounts have a limit of 10 and AWS refuses any reservation).
 resource "aws_sqs_queue" "news_dlq" {
-  name                      = "${var.name}-news-dlq"
+  name                      = "${var.name}-news-dlq.fifo"
+  fifo_queue                = true
   message_retention_seconds = 1209600 # 14 days to inspect failures
 }
 
 resource "aws_sqs_queue" "news" {
-  name                       = "${var.name}-news"
+  name                       = "${var.name}-news.fifo"
+  fifo_queue                 = true
   visibility_timeout_seconds = 1800 # ≥ 6 × the scorer's timeout, per AWS guidance for SQS event sources
   redrive_policy             = jsonencode({ deadLetterTargetArn = aws_sqs_queue.news_dlq.arn, maxReceiveCount = 3 })
 }
@@ -76,8 +80,8 @@ resource "aws_ecr_repository" "finbert" {
 resource "aws_ecr_lifecycle_policy" "finbert" {
   repository = aws_ecr_repository.finbert.name
   policy = jsonencode({ rules = [{
-    rulePriority = 1, description = "keep the last 3 images",
-    selection    = { tagStatus = "any", countType = "imageCountMoreThan", countNumber = 3 },
+    rulePriority = 1, description = "keep the last image (ECR storage is the main cost)",
+    selection    = { tagStatus = "any", countType = "imageCountMoreThan", countNumber = 1 },
     action       = { type = "expire" }
   }] })
 }
@@ -121,14 +125,13 @@ resource "aws_lambda_function" "job" {
 }
 
 resource "aws_lambda_function" "news_score" {
-  function_name                  = "${var.name}-news-score"
-  role                           = aws_iam_role.jobs.arn
-  package_type                   = "Image"
-  image_uri                      = "${aws_ecr_repository.finbert.repository_url}:${var.image_tag}"
-  architectures                  = ["arm64"]
-  memory_size                    = 3008 # the only large function (plan §12)
-  timeout                        = 300
-  reserved_concurrent_executions = 1 # one writer for sentiment.parquet
+  function_name = "${var.name}-news-score"
+  role          = aws_iam_role.jobs.arn
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.finbert.repository_url}:${var.image_tag}"
+  architectures = ["arm64"]
+  memory_size   = 3008 # the only large function (plan §12)
+  timeout       = 300
   ephemeral_storage { size = 2048 }
   image_config { command = ["app.aws.handlers.news_score"] }
   environment { variables = local.env }
@@ -136,11 +139,10 @@ resource "aws_lambda_function" "news_score" {
 }
 
 resource "aws_lambda_event_source_mapping" "news" {
-  depends_on                         = [aws_iam_role_policy.jobs] # SQS polling needs the policy first
-  event_source_arn                   = aws_sqs_queue.news.arn
-  function_name                      = aws_lambda_function.news_score.arn
-  batch_size                         = 16
-  maximum_batching_window_in_seconds = 30
+  depends_on       = [aws_iam_role_policy.jobs] # SQS polling needs the policy first
+  event_source_arn = aws_sqs_queue.news.arn
+  function_name    = aws_lambda_function.news_score.arn
+  batch_size       = 10 # the FIFO maximum; FIFO sources take no batching window
 }
 
 # ---- schedules (EventBridge Scheduler, IST) ----

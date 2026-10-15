@@ -84,7 +84,7 @@ locals {
     Statement = concat(local.data_access, [
       { Effect = "Allow", Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:Scan"], Resource = module.storage.table_arn },
       { Effect = "Allow", Action = ["events:PutEvents"], Resource = "arn:aws:events:${var.region}:${local.account}:event-bus/${local.name}-pipeline" },
-      { Effect = "Allow", Action = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"], Resource = "arn:aws:sqs:${var.region}:${local.account}:${local.name}-news" },
+      { Effect = "Allow", Action = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"], Resource = "arn:aws:sqs:${var.region}:${local.account}:${local.name}-news.fifo" },
       { Effect = "Allow", Action = ["sns:Publish"], Resource = "arn:aws:sns:${var.region}:${local.account}:${local.name}-alerts" },
     ])
   })
