@@ -98,7 +98,7 @@ def test_risk_report_notes_and_errors():
     R.loc[idx[40:], "b"] = np.tile([0.02, -0.01], 30)  # b listed later: 60 overlapping days
     r = report(R, {"a": 0.5, "b": 0.5})
     assert r.observations == 60
-    assert len(r.notes) == 3  # shortened lookback, short scoring window, unset risk-free rate
+    assert len(r.notes) == 4  # shortened lookback, short scoring window, b stood in for, unset risk-free rate
     with pytest.raises(ValueError, match="no risky assets"):
         report(R, {})
     with pytest.raises(ValueError, match="overlapping history"):
@@ -137,3 +137,13 @@ def test_score_drawdown_uses_the_fixed_window_not_the_chosen_one():
     assert r.max_drawdown > -0.01  # the last 60 days look calm
     assert r.score_drawdown == pytest.approx(0.95**10 - 1, abs=1e-6)  # the score still sees the crash
     assert r.score_drawdown_days == 300
+
+
+def test_young_asset_does_not_shorten_the_score_drawdown_window():
+    idx = pd.bdate_range("2024-01-01", periods=300)
+    old = np.r_[np.full(10, -0.05), np.tile([0.002, -0.001], 145)]  # crash early, gently up since
+    young = np.r_[np.full(200, np.nan), np.tile([0.001, -0.001], 50)]  # launched after the crash
+    r = report(pd.DataFrame({"a": old, "b": young}, index=idx), {"a": 0.5, "b": 0.5}, lookback=60)
+    assert r.score_drawdown_days == 300  # not cut to b's 100 days
+    assert r.score_drawdown == pytest.approx(0.95**10 - 1, abs=1e-6)  # a stands in for b during the crash
+    assert any("started later" in n for n in r.notes)

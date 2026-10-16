@@ -115,8 +115,8 @@ def risk_report(
     notes = []
     if weights.empty:
         raise ValueError("portfolio has no risky assets")
-    R_all = R[weights.index].dropna()
-    R = R_all.tail(lookback)
+    R_any = R[weights.index].dropna(how="all")
+    R = R_any.dropna().tail(lookback)
     if len(R) < 30:
         raise ValueError(f"only {len(R)} days of overlapping history; need at least 30")
     if len(R) < lookback:
@@ -128,7 +128,15 @@ def risk_report(
     rf = rf or 0.0
 
     r = R @ weights
-    r_all = R_all @ weights
+    # Long windows (score drawdown, holding view) must not shrink to the youngest fund's age, which would hide
+    # the falls before it launched: on days an asset has no data, the others stand in at its weight.
+    live = R_any.notna().astype(float)
+    r_all = (R_any.fillna(0) @ weights) / (live @ weights) * weights.sum()
+    if young := [a for a in weights.index if R_any[a].first_valid_index() > R_any.index[0]]:
+        notes.append(
+            f"{len(young)} holding(s) started later than the rest; before they did, the worst fall and"
+            " holding-period figures use the other holdings in their place"
+        )
     rf_d = rf / TRADING_DAYS
     dd_days = cfg["drawdown_window_days"]
     r_dd = r_all.tail(dd_days)

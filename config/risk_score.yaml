@@ -1,13 +1,16 @@
 # 0-100 portfolio risk score (FR5). Bump `version` whenever anything below changes; it is returned
 # with every score so stored snapshots stay comparable.
-version: v2
+version: v3
 # Each metric maps linearly onto 0-100: `low` scores 0, `high` scores 100, clipped outside.
 # Weights are normalised to sum to 1. VaR is historical 1-day at 95%, whatever confidence was requested.
+# Calibrated (v3) so that cash scores 0, a 100% Nifty or diversified all-equity portfolio lands in High, about
+# half equity and half cash lands in Moderate, and mostly cash lands in Low. v2's top ends (40% volatility,
+# -50% fall, 5% daily VaR) sat far beyond Indian equity, so any diversified equity portfolio came out Low.
 components:
-  volatility_ann: { weight: 0.30, low: 0.05, high: 0.40 }
-  max_drawdown: { weight: 0.20, low: 0.0, high: -0.50 }
-  var_1d_95: { weight: 0.20, low: 0.0, high: 0.05 }
-  beta: { weight: 0.15, low: 0.5, high: 1.5 }
+  volatility_ann: { weight: 0.30, low: 0.0, high: 0.16 }
+  max_drawdown: { weight: 0.20, low: 0.0, high: -0.25 }
+  var_1d_95: { weight: 0.20, low: 0.0, high: 0.018 }
+  beta: { weight: 0.15, low: 0.0, high: 1.2 }
   hhi: { weight: 0.15, low: 0.05, high: 0.50 }
 # The score's max_drawdown is always measured over this many trading days (~5 years), whatever history window
 # the user picks: a short window cannot contain the big falls, so it would make the score look artificially calm.
