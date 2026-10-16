@@ -71,9 +71,19 @@ def holdings_ingest(event, context):
     return {"ok": True}
 
 
-def unscored(news, done_ids: set[str]) -> list[dict]:
-    """Headlines not yet scored, as SQS message bodies."""
-    todo = news[~news["news_id"].isin(done_ids)]
+QUEUE_MAX_AGE_DAYS = 7
+
+
+def unscored(news, done_ids: set[str], now=None) -> list[dict]:
+    """Recent headlines not yet scored, as SQS message bodies.
+
+    Only the last QUEUE_MAX_AGE_DAYS: historical news (the GDELT store) is scored once on a laptop, so an
+    unscored backlog can never turn into thousands of FinBERT Lambda runs.
+    """
+    import pandas as pd
+
+    cutoff = pd.Timestamp(now or datetime.now(UTC)) - pd.Timedelta(days=QUEUE_MAX_AGE_DAYS)
+    todo = news[~news["news_id"].isin(done_ids) & (news["published_at"] >= cutoff)]
     return [{"news_id": r.news_id, "headline": r.headline} for r in todo.itertuples()]
 
 

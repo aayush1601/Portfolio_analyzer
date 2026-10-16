@@ -134,11 +134,37 @@ def test_news_score_scores_only_new_headlines(aws, monkeypatch):
     assert len(pd.read_parquet(io.BytesIO(obj["Body"].read()))) == 3
 
 
+def test_news_score_failure_raises_so_sqs_retries_and_writes_nothing(aws, monkeypatch):
+    """Failure mode (Phase 18): if FinBERT crashes, the batch must fail loudly. SQS then redelivers it and,
+    after 3 receives, parks it in the DLQ (alarmed). A half-written sentiment file must never be saved."""
+    from app.aws import handlers
+    from app.services import sentiment
+
+    def broken(texts):
+        raise RuntimeError("model failed to load")
+
+    monkeypatch.setattr(sentiment, "score_texts", broken)
+    record = {"body": json.dumps({"news_id": "x", "headline": "hx"})}
+    with pytest.raises(RuntimeError):
+        handlers.news_score({"Records": [record]}, None)
+    s3 = boto3.client("s3")
+    with pytest.raises(s3.exceptions.NoSuchKey):
+        s3.get_object(Bucket=BUCKET, Key="processed/sentiment.parquet")
+
+
 def test_unscored_headlines_become_queue_messages():
     from app.aws.handlers import unscored
 
-    news = pd.DataFrame({"news_id": ["a", "b"], "headline": ["A", "B"]})
-    assert unscored(news, {"a"}) == [{"news_id": "b", "headline": "B"}]
+    now = pd.Timestamp("2026-10-16T10:00Z")
+    news = pd.DataFrame(
+        {
+            "news_id": ["a", "b", "old"],
+            "headline": ["A", "B", "Old"],
+            "published_at": [now, now - pd.Timedelta(days=1), now - pd.Timedelta(days=400)],
+        }
+    )
+    # "a" is already scored; "old" is history (GDELT), scored on a laptop, never queued to Lambda
+    assert unscored(news, {"a"}, now=now) == [{"news_id": "b", "headline": "B"}]
 
 
 def test_news_impact_alerts_by_sns_and_records_the_alert(aws, monkeypatch):

@@ -1,6 +1,6 @@
 # ADR 0001: News sources
 
-- **Status:** Proposed (finalise after the Alpha Vantage spike)
+- **Status:** Accepted for live news (RSS). Historical news: option (b), decided in [ADR 0003](0003-historical-news-gdelt.md)
 - **Date:** 2026-10-04
 
 ## Context

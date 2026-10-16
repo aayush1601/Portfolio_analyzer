@@ -3,6 +3,8 @@
 Run after the collector:  uv run python -m app.services.news_pipeline   (from backend/)
 Input:  data/raw/news/rss/*.jsonl  (app.services.news_rss)
 Output: data/processed/news/year=YYYY/…parquet  (NewsItem, docs/data_model.md; sentiment comes in Phase 7)
+History: data/processed/news_history/ is built once from GDELT (app.services.news_gdelt) with the same
+process(); load_news() returns both stores.
 """
 
 import html
@@ -62,7 +64,7 @@ class Mapper:
                 r"\b(?:" + "|".join(re.escape(k) for k in n["event_keywords"]) + ")", re.IGNORECASE
             ),
             importance=n["importance"],
-            reliability={f["name"]: f["reliability"] for f in n["rss"]},
+            reliability={f["name"]: f["reliability"] for f in n["rss"]} | gdelt_reliability(n),
         )
 
     def symbols(self, text: str) -> list[str]:
@@ -92,6 +94,12 @@ class Mapper:
         }
 
 
+def gdelt_reliability(news_sources: dict) -> dict[str, float]:
+    """Reliability of the historical GDELT publishers, keyed as app.services.news_gdelt names sources."""
+    domains = (news_sources.get("gdelt") or {}).get("domains", {})
+    return {f"gdelt:{d}": r for d, r in domains.items()}
+
+
 def recency(age_hours: float, half_life_hours: float) -> float:
     """Exponential time decay used by the sentiment aggregates (Phase 7) and impact (Phase 8)."""
     return 0.5 ** (max(age_hours, 0.0) / half_life_hours)
@@ -110,6 +118,8 @@ def load_raw(raw_dir: Path) -> pd.DataFrame:
         if line
     ]
     df = pd.DataFrame(rows)
+    if df.empty:
+        return df
     for col in ("published_at", "ingested_at"):
         df[col] = pd.to_datetime(df[col], utc=True, format="ISO8601")
     return df
@@ -136,7 +146,13 @@ def process(raw: pd.DataFrame, mapper: Mapper) -> pd.DataFrame:
 
 
 def load_news(data_dir: Path, since: datetime | None = None) -> pd.DataFrame:
-    return read(data_dir / "processed" / "news", "published_at", since)
+    """Live news plus the GDELT history store when it exists; an article in both is kept once."""
+    stores = [data_dir / "processed" / name for name in ("news", "news_history")]
+    frames = [read(p, "published_at", since) for p in stores if p.exists()]
+    if len(frames) == 1:
+        return frames[0]
+    df = pd.concat(frames, ignore_index=True).drop_duplicates("news_id")
+    return df.sort_values(["published_at", "date"], ignore_index=True)
 
 
 def refresh(settings=None):

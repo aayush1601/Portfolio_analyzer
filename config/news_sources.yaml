@@ -11,6 +11,19 @@ rss:
     url: https://www.livemint.com/rss/markets
     reliability: 0.85
 
+# Historical backfill (ADR 0003): GDELT Global Knowledge Graph via BigQuery, see app/services/news_gdelt.py.
+# `start` is the default first day of the query; domains are the Indian business publishers searched, with the
+# same kind of design-assumption reliability as the RSS feeds above.
+gdelt:
+  start: 2022-01-01
+  domains:
+    economictimes.indiatimes.com: 0.85
+    livemint.com: 0.85
+    business-standard.com: 0.85
+    moneycontrol.com: 0.8
+    thehindubusinessline.com: 0.8
+    financialexpress.com: 0.8
+
 # ---- Phase 6: entity mapping and scoring. Heuristics and design assumptions, tuned on a labelled
 # sample later (plan §9: manual eval on 200 articles), not ground truth.
 

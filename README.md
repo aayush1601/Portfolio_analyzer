@@ -23,7 +23,8 @@ Phases 14–15 (AWS) built and validated: Terraform for API Gateway + Lambda, Dy
 
 ## Docs
 - [Project plan](docs/00_PROJECT_PLAN.md) · [Phase 0 guide](docs/01_PHASE_0_GUIDE.md)
-- [Requirements](docs/requirements.md) · [Data sources](docs/data_sources.md) · [ADR 0001](docs/adr/0001-news-source.md)
+- [Requirements](docs/requirements.md) · [Data sources](docs/data_sources.md) · ADRs: [0001 news sources](docs/adr/0001-news-source.md), [0002 FIFO single writer](docs/adr/0002-fifo-queue-single-writer.md), [0003 GDELT history](docs/adr/0003-historical-news-gdelt.md)
+- [Deployment](docs/deployment.md) · [Testing](docs/testing.md)
 - [Look-through exposure](docs/algorithms/exposure.md) · [Data model & DynamoDB](docs/data_model.md)
 - [API spec](docs/api/openapi.yaml) · [Diagrams](docs/diagrams/README.md)
 - Research universe: [config/universe.yaml](config/universe.yaml)
