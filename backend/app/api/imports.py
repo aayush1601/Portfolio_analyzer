@@ -54,8 +54,8 @@ def session_status(token: str) -> dict:
 async def import_cas(
     store: Store,
     file: Annotated[UploadFile, File(description="CAS PDF from CAMS, KFintech or MF Central")],
-    password: Annotated[str, Form(max_length=64)],
     token: Annotated[str, Form(max_length=64)],
+    password: Annotated[str, Form(max_length=64)] = "",  # MF Central summaries are not locked
     name: Annotated[str, Form(max_length=100)] = "",
 ) -> dict:
     # No login on this route (the phone has none): the token names the account it imports into.

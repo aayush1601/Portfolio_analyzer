@@ -110,3 +110,32 @@ def test_import_endpoint_creates_a_portfolio_and_completes_the_phone_session(cli
         27500 / 150, abs=1e-4
     )
     assert saved["150000"].avg_cost == pytest.approx(400 / 20)  # no cost in statement: today's value
+
+
+MFC_PAGE = """Consolidated Account Summary
+( As on Date: 16-Oct-2026 )
+MFCentralCASSummary_v2.1_1_ALL-16/10/2026 1:33:31pm Page 3 of 3
+Units Client Id Scheme Details NAV Date NAV
+HDFC Flexi Cap Fund - Regular Plan - Growth 1,42,000.00 1,39,408.00 (2,592.00)
+(-1.83%) 36119364 70.460 15-Oct-2026 1,978.541
+Bandhan Small Cap Fund-Direct Plan-
+Growth
+1,50,000.00 1,63,809.64 13,809.64
+(+9.21%) 6516819 2,902.985 15-Oct-2026 56.428
+Total 3,03,217.64"""
+
+
+def test_parse_mfcentral_summary_resolves_names_by_nav():
+    navs = {"101762": "1978.54100", "147946": "56.42800"}  # any other candidate code has no matching NAV
+
+    def mfapi(r):
+        code = r.url.path.rsplit("/", 1)[-1]
+        return httpx.Response(200, json={"data": [{"date": "15-10-2026", "nav": navs.get(code, "1.0")}]})
+
+    parsed = cas.parse_mfcentral_summary([MFC_PAGE], httpx.Client(transport=httpx.MockTransport(mfapi)))
+    funds, skipped = cas.funds_from_cas(parsed)
+    by = {f.scheme_code: f for f in funds}
+    assert set(by) == {"101762", "147946"} and skipped == []
+    assert (by["101762"].units, by["101762"].cost, by["101762"].value) == (70.46, 142000, 139408)
+    assert by["147946"].name == "Bandhan Small Cap Fund-Direct Plan- Growth"
+    assert parsed["statement_period"]["to"] == "16-Oct-2026"

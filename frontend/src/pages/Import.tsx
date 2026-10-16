@@ -63,11 +63,10 @@ function UploadForm({ token, onDone }: { token: string; onDone: (r: ImportResult
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-[0.85rem] font-bold text-ink-2">PDF password</span>
+        <span className="mb-1 block text-[0.85rem] font-bold text-ink-2">PDF password (if the file has one)</span>
         <input
           type="password"
           autoComplete="off"
-          required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Your PAN, e.g. ABCDE1234F"

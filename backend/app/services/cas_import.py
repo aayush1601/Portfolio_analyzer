@@ -11,9 +11,11 @@ portfolio can be valued and risk-rated; their look-through still needs holdings 
 import io
 import json
 import logging
+import re
 import secrets
 import time
 from dataclasses import dataclass
+from datetime import date, datetime
 from pathlib import Path
 
 import httpx
@@ -55,9 +57,103 @@ def parse_cas(data: bytes, password: str) -> dict:
     except IncorrectPasswordError as e:
         raise CASImportError("Couldn't open the PDF: the password is usually your PAN in capitals.") from e
     except CASParseError as e:
+        # casparser only knows watermarked CAMS/KFin statements and NSDL/CDSL; MF Central's summary is ours.
+        pages = _pdf_text(data, password)
+        if "MFCentralCASSummary" in "".join(pages):
+            with httpx.Client(timeout=30) as client:
+                return parse_mfcentral_summary(pages, client)
         raise CASImportError(
             "This PDF doesn't look like a CAMS / KFintech / MF Central consolidated statement."
         ) from e
+
+
+def _pdf_text(data: bytes, password: str) -> list[str]:
+    import pypdfium2 as pdfium
+
+    try:
+        doc = pdfium.PdfDocument(data, password=password or None)
+    except pdfium.PdfiumError:
+        return []
+    return [p.get_textpage().get_text_bounded() for p in doc]
+
+
+# MF Central "Consolidated Account Summary": one row per holding, both the SoA and Demat tables:
+# <scheme> <invested> <market value> <gain, (x) if negative> (<+x%>) <folio> <units> <NAV date> <NAV>
+_NUM = r"[\d,]+\.\d+"
+_MFC_ROW = re.compile(
+    rf"(?P<name>\S.*?)\s+(?P<cost>{_NUM})\s+(?P<value>{_NUM})\s+\(?{_NUM}\)?\s+\([+-]?[\d.]+%\)\s+\S+\s+"
+    rf"(?P<units>{_NUM})\s+(?P<date>\d{{2}}-[A-Za-z]{{3}}-\d{{4}})\s+(?P<nav>{_NUM})"
+)
+
+
+def _num(s: str) -> float:
+    return float(s.replace(",", ""))
+
+
+def parse_mfcentral_summary(pages: list[str], client: httpx.Client) -> dict:
+    """MF Central summary → the casparser dict shape funds_from_cas reads.
+
+    The summary prints scheme names but no AMFI code or ISIN, so each name is resolved by resolve_amfi.
+    """
+    schemes = []
+    for page in pages:
+        if "Scheme Details" not in page:
+            continue
+        table = " ".join(page.split("NAV Date NAV", 1)[-1].split("Total ", 1)[0].split())
+        for m in _MFC_ROW.finditer(table):
+            nav_date = datetime.strptime(m["date"], "%d-%b-%Y").date()
+            schemes.append(
+                {
+                    "scheme": m["name"],
+                    "amfi": resolve_amfi(m["name"], nav_date, _num(m["nav"]), client),
+                    "close": _num(m["units"]),
+                    "valuation": {
+                        "date": str(nav_date),
+                        "nav": _num(m["nav"]),
+                        "value": _num(m["value"]),
+                        "cost": _num(m["cost"]),
+                    },
+                }
+            )
+    as_on = re.search(r"As on Date:\s*(\d{2}-[A-Za-z]{3}-\d{4})", pages[0] if pages else "")
+    return {"statement_period": {"to": as_on[1] if as_on else ""}, "folios": [{"schemes": schemes}]}
+
+
+_FILLER = re.compile(r"\b(plan|option|fund|scheme)\b|[^a-z0-9]")
+
+
+def resolve_amfi(name: str, nav_date: date, nav: float, client: httpx.Client) -> str | None:
+    """AMFI code for a scheme name: shortlist same-AMC, same plan/option names from casparser-isin's DB,
+    then accept the first whose mfapi NAV on nav_date matches the statement's. None when nothing matches,
+    so the fund is reported as skipped, never guessed."""
+    from casparser_isin.mf_isin import MFISINDb
+    from rapidfuzz import fuzz, process
+
+    low = name.lower()
+    direct, idcw = "direct" in low, bool(re.search(r"idcw|dividend", low))
+    with MFISINDb() as db:
+        rows = db.run_query(
+            "SELECT DISTINCT name, amfi_code FROM scheme WHERE name LIKE :amc AND amfi_code != ''",
+            {"amc": low.split()[0] + " %"},
+        )
+    names = {
+        r["name"]: r["amfi_code"]
+        for r in rows
+        if ("direct" in r["name"].lower()) == direct
+        and bool(re.search(r"idcw|dividend", r["name"].lower())) == idcw
+    }
+    key = lambda s: _FILLER.sub("", s.lower())  # noqa: E731  "Flexi Cap" == "FLEXICAP"
+    for _, _, cand in process.extract(key(name), {n: key(n) for n in names}, scorer=fuzz.ratio, limit=5):
+        code = names[cand]
+        resp = client.get(f"https://api.mfapi.in/mf/{code}")
+        resp.raise_for_status()
+        day = nav_date.strftime("%d-%m-%Y")
+        if any(
+            p["date"] == day and abs(float(p["nav"]) - nav) <= 0.002 * nav
+            for p in resp.json().get("data", [])
+        ):
+            return code
+    return None
 
 
 def funds_from_cas(cas: dict) -> tuple[list[ImportedFund], list[str]]:
