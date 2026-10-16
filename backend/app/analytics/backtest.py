@@ -60,6 +60,17 @@ def simulate(
     return pd.DataFrame(rows).set_index("date")
 
 
+def gross_returns(ret: pd.Series, turnover: pd.Series, cost_bps: float) -> pd.Series:
+    """Returns before trading costs; simulate() charges turnover × cost on the day it reports turnover."""
+    return ret + turnover.reindex(ret.index).fillna(0.0) * cost_bps / 1e4
+
+
+def first_covered(hits: dict[pd.Timestamp, int]) -> pd.Timestamp | None:
+    """First rebalance date at which the news layer had any evidence (start of the news window)."""
+    covered = sorted(t for t, n in hits.items() if n)
+    return covered[0] if covered else None
+
+
 def metrics(r: pd.Series, turnover: pd.Series | None = None, rf: float = 0.0) -> dict[str, float]:
     """Annualised performance of a daily return series."""
     years = len(r) / TRADING_DAYS

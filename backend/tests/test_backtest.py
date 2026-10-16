@@ -81,3 +81,39 @@ def test_backtest_routes_read_stored_runs(tmp_path, monkeypatch):
         assert c.post("/backtest", json={"cost_bps": 999}).status_code == 422
     finally:
         get_settings.cache_clear()
+
+
+def test_gross_returns_add_back_exactly_the_cost_charged():
+    out = bt.simulate(R, [D[0], D[2]], lambda t: HALF, cost_bps=10, end=D[-1])
+    free = bt.simulate(R, [D[0], D[2]], lambda t: HALF, cost_bps=0, end=D[-1])
+    pd.testing.assert_series_equal(
+        bt.gross_returns(out["ret"], out["turnover"], 10), free["ret"], check_names=False
+    )
+
+
+def test_news_window_starts_at_first_rebalance_with_evidence():
+    hits = {D[0]: 0, D[1]: 0, D[2]: 3, D[3]: 0, D[4]: 1}
+    assert bt.first_covered(hits) == D[2]
+    assert bt.first_covered({D[0]: 0}) is None
+
+
+def test_report_news_section_with_and_without_a_window():
+    from app.services.backtest import news_section
+
+    base = {"news_coverage": {"rebalances_with_news": 0, "rebalances": 10}}
+    assert "cannot be answered" in news_section({**base, "news_window": None})
+
+    m = {"cagr": 0.1, "volatility": 0.2, "sharpe": 0.5, "max_drawdown": -0.3, "turnover": 2.0}
+    t = {"sharpe_diff": -0.02, "ci_low": -0.3, "ci_high": 0.2, "p_value": 0.6}
+    w = {
+        "start": "2022-01-03",
+        "end": "2026-10-15",
+        "rebalances": 57,
+        "rebalances_with_news": 57,
+        "metrics": {"C_mean_variance": m, "D_news_aware_mv": m},
+        "gross": {"C_mean_variance": m, "D_news_aware_mv": m},
+        "tests": [{"basis": "after costs", **t}, {"basis": "before costs", **t}],
+        "sensitivity": [{"news_tilt": 0.1, "sharpe": 0.5, "sharpe_gross": 0.6, "cagr": 0.1, "turnover": 2.0}],
+    }
+    text = news_section({"news_coverage": {"rebalances_with_news": 57, "rebalances": 105}, "news_window": w})
+    assert "57 of 105" in text and "D vs C, before costs" in text and "| 0.10 | 0.50 | 0.60 |" in text

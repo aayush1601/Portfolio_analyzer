@@ -100,7 +100,8 @@ def run(overrides: dict | None = None, run_id: str | None = None) -> dict:
                 return pd.Series(1 / hist.shape[1], index=hist.columns)
             mu, Sigma = shrunk_mu(hist, opt["mu_shrinkage"]), shrunk_cov(hist, opt["cov_shrinkage"])
             if spec.get("news"):
-                mu = mu.add(cfg["news_tilt"] * sentiment_at(t), fill_value=0).reindex(mu.index)
+                tilt = spec.get("news_tilt", cfg["news_tilt"])
+                mu = mu.add(tilt * sentiment_at(t), fill_value=0).reindex(mu.index)
             H, _ = lookthrough_matrix(list(hist.columns), stocks, latest_holdings(holdings, t.date()))
             w, _ = optimize(
                 mu,
@@ -144,6 +145,7 @@ def run(overrides: dict | None = None, run_id: str | None = None) -> dict:
     wealth = (1 + returns).cumprod()
     monthly = wealth.groupby([wealth.index.year, wealth.index.month]).tail(1)
     news_rebalances = sum(1 for n in news_hits.values() if n)
+    window = news_window(cfg, R, rebal, end, weights_fn, returns, sims, news_hits)
 
     fingerprint = hashlib.sha256(
         json.dumps(
@@ -161,6 +163,7 @@ def run(overrides: dict | None = None, run_id: str | None = None) -> dict:
         "tests": tests,
         "regimes": regime_rows,
         "news_coverage": {"rebalances_with_news": news_rebalances, "rebalances": len(news_hits)},
+        "news_window": window,
         "equity": {
             "dates": [str(d.date()) for d in monthly.index],
             **{n: monthly[n].round(5).tolist() for n in monthly.columns},
@@ -170,6 +173,64 @@ def run(overrides: dict | None = None, run_id: str | None = None) -> dict:
     (out / "results.json").write_text(json.dumps(results, indent=2, default=float))
     log.info("backtest done", extra={"fields": {"run_id": run_id, "fingerprint": fingerprint}})
     return results
+
+
+def news_window(cfg, R, rebal, end, weights_fn, returns, sims, news_hits) -> dict | None:
+    """RQ3 on the days where news exists, net and before costs, plus the news_tilt sensitivity.
+
+    Over the full period D equals C wherever there is no news, which dilutes any difference; ADR 0001 asks for
+    the ablation to run on the news window. "Before costs" separates information from trading: if D only
+    loses net, news carries signal that is too expensive to trade; if it loses gross too, it adds noise.
+    """
+    start = bt.first_covered(news_hits)
+    if start is None or "D_news_aware_mv" not in returns or "C_mean_variance" not in returns:
+        return None
+    days = returns.index[returns.index > start]
+    b, cost = cfg["bootstrap"], cfg["cost_bps"]
+    net = returns.loc[days]
+    gross = {
+        n: bt.gross_returns(sims[n]["ret"], sims[n]["turnover"], cost).reindex(days)
+        for n in ("C_mean_variance", "D_news_aware_mv")
+    }
+
+    def test(a: pd.Series, v: pd.Series, label: str) -> dict:
+        return {"basis": label, **bt.sharpe_difference_test(a, v, b["resamples"], b["block_days"], b["seed"])}
+
+    covered = [t for t in rebal if t >= start]
+    sensitivity = []
+    for tilt in cfg.get("news_tilt_grid", []):
+        spec = {"kind": "optimizer", "objective": "balanced", "news": True, "news_tilt": tilt}
+        # Full period, then sliced: the same rebalance dates and starting book as C and D, so tilt 0 reproduces C
+        # and the configured tilt reproduces D (a built-in consistency check).
+        sim = bt.simulate(R, rebal, weights_fn(spec), cost, end)
+        sim = sim.loc[sim.index > start]
+        sensitivity.append(
+            {
+                "news_tilt": tilt,
+                "sharpe": float(bt.sharpe(sim["ret"].to_numpy())),
+                "sharpe_gross": float(
+                    bt.sharpe(bt.gross_returns(sim["ret"], sim["turnover"], cost).to_numpy())
+                ),
+                "cagr": bt.metrics(sim["ret"])["cagr"],
+                "turnover": bt.metrics(sim["ret"], sim["turnover"])["turnover"],
+            }
+        )
+    keep = [n for n in ("C_mean_variance", "D_news_aware_mv", "buy_and_hold", "benchmark") if n in net]
+    return {
+        "start": str(days[0].date()),
+        "end": str(days[-1].date()),
+        "rebalances": len(covered),
+        "rebalances_with_news": sum(1 for t in covered if news_hits.get(t)),
+        "metrics": {
+            n: bt.metrics(net[n], sims[n]["turnover"].reindex(days) if n in sims else None) for n in keep
+        },
+        "gross": {n: bt.metrics(g) for n, g in gross.items()},
+        "tests": [
+            test(net["D_news_aware_mv"], net["C_mean_variance"], "after costs"),
+            test(gross["D_news_aware_mv"], gross["C_mean_variance"], "before costs"),
+        ],
+        "sensitivity": sensitivity,
+    }
 
 
 def load_run(data_dir: Path, run_id: str) -> dict | None:
@@ -199,6 +260,59 @@ NAMES = {
 }
 
 
+def news_section(results: dict) -> str:
+    nc, w = results["news_coverage"], results.get("news_window")
+    head = f"""## RQ3: the news window
+The news layer had evidence on **{nc["rebalances_with_news"]} of {nc["rebalances"]}** rebalances. Where there is no news, D is
+exactly C, so the full-period D vs C test above is diluted. The test that answers RQ3 runs only on the news
+window (ADR 0001)."""
+    if not w:
+        return head + "\n\nNo rebalance had news evidence, so RQ3 cannot be answered from this run."
+    names = {**NAMES, "C_mean_variance": "C · no news", "D_news_aware_mv": "D · news-aware"}
+    rows = "\n".join(
+        f"| {names.get(n, n)} | {v['cagr']:.1%} | {v['volatility']:.1%} | {v['sharpe']:.2f} | {v['max_drawdown']:.1%} | "
+        + (f"{v['turnover']:.2f}" if "turnover" in v else "–")
+        + " |"
+        for n, v in w["metrics"].items()
+    )
+    gross = " · ".join(
+        f"{names[n]}: Sharpe {v['sharpe']:.2f}, CAGR {v['cagr']:.1%}" for n, v in w["gross"].items()
+    )
+    tests = "\n".join(
+        f"| D vs C, {t['basis']} | {t['sharpe_diff']:+.2f} | [{t['ci_low']:+.2f}, {t['ci_high']:+.2f}] | {t['p_value']:.3f} |"
+        for t in w["tests"]
+    )
+    sens = "\n".join(
+        f"| {r['news_tilt']:.2f} | {r['sharpe']:.2f} | {r['sharpe_gross']:.2f} | {r['cagr']:.1%} | {r['turnover']:.2f} |"
+        for r in w["sensitivity"]
+    )
+    return f"""{head}
+
+**Window:** {w["start"]} to {w["end"]}, {w["rebalances"]} rebalances, {w["rebalances_with_news"]} with news evidence.
+
+| Strategy | CAGR | Volatility | Sharpe | Max drawdown | Turnover / yr |
+|---|---|---|---|---|---|
+{rows}
+
+Before trading costs: {gross}.
+
+| Test (one-sided, H1: D has the higher Sharpe) | Sharpe difference | 95% interval | p-value |
+|---|---|---|---|
+{tests}
+
+"After costs" answers whether news improves the portfolio an investor would hold; "before costs" whether the
+news tilt carries information at all. Losing after costs but not before means a signal too costly to trade;
+losing before costs too means the tilt adds noise.
+
+**Sensitivity to `news_tilt`** (μ shift per unit of sentiment; 0 = no news). A robustness check, not tuning:
+the configured value was fixed before the historical news existed, and choosing it from this table would fit
+the test period.
+
+| news_tilt | Sharpe | Sharpe before costs | CAGR | Turnover / yr |
+|---|---|---|---|---|
+{sens}"""
+
+
 def report(results: dict) -> str:
     m = results["metrics"]
     rows = "\n".join(
@@ -216,7 +330,6 @@ def report(results: dict) -> str:
         f"| {r['regime']} | {r['days']} | " + " | ".join(f"{r[c]:.2f}" for c in cols) + " |"
         for r in results["regimes"]
     )
-    nc = results["news_coverage"]
     c = results["config"]
     return f"""# Backtest report (Phase 12)
 
@@ -239,10 +352,7 @@ One-sided test of H1: the first strategy has the higher Sharpe ratio. p < 0.05 w
 |---|---|---|---|---|
 {tests}
 
-## RQ3 caveat: news coverage
-The news layer had evidence on **{nc["rebalances_with_news"]} of {nc["rebalances"]}** rebalances. Without historical news the
-news-aware strategy (D) is the mean-variance strategy (C), so D vs C cannot answer RQ3 yet. It becomes
-answerable once a historical news source is backfilled (ADR 0001) or enough RSS history accumulates.
+{news_section(results)}
 
 ## Sharpe ratio by regime (RQ4)
 | Regime | Days | {" | ".join(NAMES.get(x, x) for x in cols)} |
@@ -270,6 +380,17 @@ def main() -> None:
     for t in results["tests"]:
         print(f"  {t['strategy']} vs {t['versus']}: ΔSharpe {t['sharpe_diff']:+.2f}  p={t['p_value']:.3f}")
     print("news coverage:", results["news_coverage"])
+    if w := results.get("news_window"):
+        print(f"news window {w['start']} → {w['end']} ({w['rebalances']} rebalances):")
+        for n, v in w["metrics"].items():
+            print(f"  {NAMES.get(n, n):32s} CAGR {v['cagr']:6.1%}  Sharpe {v['sharpe']:5.2f}")
+        for t in w["tests"]:
+            print(f"  D vs C {t['basis']:13s}: ΔSharpe {t['sharpe_diff']:+.2f}  p={t['p_value']:.3f}")
+        for r in w["sensitivity"]:
+            print(
+                f"  news_tilt {r['news_tilt']:.2f}: Sharpe {r['sharpe']:.2f} (before costs {r['sharpe_gross']:.2f})"
+                f"  turnover {r['turnover']:.2f}"
+            )
 
 
 if __name__ == "__main__":
