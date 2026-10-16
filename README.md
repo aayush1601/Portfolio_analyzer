@@ -115,3 +115,8 @@ Funds without a disclosure count as *Other/Unmapped* (the response says so) unti
 ```bash
 cd backend && uv sync --group spikes && uv run python ../spikes/check_sources.py
 ```
+
+## Run the whole project
+```bash
+cp .env.example .env && docker compose up --build      # API http://localhost:8000, UI http://localhost:5173
+```
