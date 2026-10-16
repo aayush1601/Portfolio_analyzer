@@ -32,7 +32,8 @@ jobs:
 
   deploy:
     needs: ci
-    if: github.ref == 'refs/heads/main'
+    # Skipped (not failed) until the bootstrap role exists and AWS_DEPLOY_ROLE_ARN is set (docs/deployment.md).
+    if: github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
     runs-on: ubuntu-latest
     environment: ${{ inputs.env || 'dev' }}
     permissions:

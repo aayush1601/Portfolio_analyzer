@@ -69,7 +69,8 @@ locals {
   data_access = [
     { Effect = "Allow", Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], Resource = "${module.storage.bucket_arn}/*" },
     { Effect = "Allow", Action = ["s3:ListBucket"], Resource = module.storage.bucket_arn },
-    { Effect = "Allow", Action = ["ssm:GetParametersByPath"], Resource = "arn:aws:ssm:${var.region}:${local.account}:parameter${trimsuffix(local.secrets, "/")}" },
+    # IAM matches the path exactly as requested, with or without the trailing slash, so allow both spellings.
+    { Effect = "Allow", Action = ["ssm:GetParametersByPath"], Resource = [for p in [trimsuffix(local.secrets, "/"), local.secrets] : "arn:aws:ssm:${var.region}:${local.account}:parameter${p}"] },
   ]
   # The API reads and writes one user's items at a time: no Scan, no pipeline access.
   api_policy = jsonencode({

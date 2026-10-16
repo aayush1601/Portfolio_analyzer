@@ -43,9 +43,9 @@ def ssm_secrets(path: str) -> dict[str, str]:
     """SecureString parameters under `path`, keyed by their lower-cased last segment."""
     import boto3
 
-    pages = (
-        boto3.client("ssm").get_paginator("get_parameters_by_path").paginate(Path=path, WithDecryption=True)
-    )
+    # Ask without the trailing slash: IAM matches the requested path exactly (infrastructure/environments).
+    paginator = boto3.client("ssm").get_paginator("get_parameters_by_path")
+    pages = paginator.paginate(Path=path.rstrip("/") or "/", WithDecryption=True)
     # Terraform creates each parameter with the placeholder "unset"; the real value is put by hand.
     params = [p for page in pages for p in page["Parameters"] if p["Value"] != "unset"]
     return {p["Name"].rsplit("/", 1)[-1].lower(): p["Value"] for p in params}
