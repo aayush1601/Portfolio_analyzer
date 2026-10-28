@@ -41,8 +41,11 @@ aws s3 sync data/raw/news "s3://$DATA/raw/news" --exclude "*.DS_Store"
 date +%s | aws s3 cp - "s3://$DATA/_version"
 
 echo "5/5 Frontend (signs in through Cognito)"
-(cd frontend && npm ci --silent && VITE_COGNITO_DOMAIN="$($TF output -raw login_domain)" \
-  VITE_COGNITO_CLIENT_ID="$($TF output -raw client_id)" npm run build)
+# Read the outputs here, at the repo root: $TF uses a relative -chdir, which fails inside frontend/ and would
+# silently build the site with sign-in switched off (every API call then gets HTTP 401).
+export VITE_COGNITO_DOMAIN="$($TF output -raw login_domain)" VITE_COGNITO_CLIENT_ID="$($TF output -raw client_id)"
+[ -n "$VITE_COGNITO_DOMAIN" ] && [ -n "$VITE_COGNITO_CLIENT_ID" ] || { echo "Cognito outputs missing"; exit 1; }
+(cd frontend && npm ci --silent && npm run build)
 aws s3 sync frontend/dist "s3://$WEB" --delete
 aws cloudfront create-invalidation --distribution-id "$DIST" --paths "/*" >/dev/null
 
