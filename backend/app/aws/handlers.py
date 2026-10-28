@@ -13,7 +13,7 @@ Every job reads data mirrored from S3 (app.aws.storage) and writes back what it 
 
 import json
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from app.aws.events import emit
@@ -146,8 +146,15 @@ def news_score(event, context):
     return {"scored": len(msgs)}
 
 
+ALERT_COOLDOWN_HOURS = 24
+
+
 def news_impact(event, context):
-    """Exposure-weighted news impact per portfolio; publish an SNS alert when it crosses the threshold."""
+    """Exposure-weighted news impact per portfolio; publish an SNS alert when it crosses the threshold.
+
+    NewsScored can fire every 30 min and impact decays slowly, so a portfolio is alerted at most once per
+    ALERT_COOLDOWN_HOURS; otherwise the same headlines would be emailed again on every run.
+    """
     import boto3
 
     from app.api.portfolio import get_news, get_store
@@ -157,7 +164,11 @@ def news_impact(event, context):
     store = get_store()
     sns = boto3.client("sns") if s.alerts_topic_arn else None
     alerts = 0
+    since = (datetime.now(UTC) - timedelta(hours=ALERT_COOLDOWN_HOURS)).isoformat()
     for user, p in store.all():
+        recent = store.snapshots(user, "ALERT#", limit=100, since=since)
+        if any(a["portfolio_id"] == p.portfolio_id for a in recent):
+            continue
         n = get_news(p.portfolio_id, user, store, limit=5)
         if not n.alert:
             continue

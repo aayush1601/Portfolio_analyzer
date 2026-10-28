@@ -123,6 +123,34 @@ paths:
                 risk_band: Moderate
                 score_weights_version: v1
 
+  /portfolio/{id}/risk/history:
+    parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
+    get:
+      summary: Stored risk snapshots, newest first (AP4; written by risk_refresh after each market update, empty locally)
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 30, maximum: 365 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - { as_of: "2026-10-03", risk_score: 47, risk_band: Moderate, volatility_ann: 0.164, var_1d: 0.021, weights_version: v1 }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /portfolio/alerts:
+    get:
+      summary: My negative-news alerts across portfolios, newest first (AP6; at most one per portfolio per 24 h, empty locally)
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - { portfolio_id: p01, type: negative_news, impact: -0.034, created_at: "2026-10-03T09:30:00+00:00" }
+
   /portfolio/{id}/stress:
     parameters: [ { $ref: "#/components/parameters/PortfolioId" } ]
     post:

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Riskometer, TailHistogram } from '../charts'
-import { api, useApi, type HoldingPeriod, type Reference, type Risk, type StressResult } from '../api'
+import { api, useApi, type HoldingPeriod, type Reference, type Risk, type RiskSnapshot, type StressResult } from '../api'
 import { Button, Card, IconPlus, IconTrash, Notes, Plate, Segmented, Status } from '../ui'
-import { fixed, inr, pct, signedInr, signedPct } from '../format'
+import { day, fixed, inr, pct, signed, signedInr, signedPct } from '../format'
 
 const LOOKBACKS = [
   { days: 63, label: '3 months' },
@@ -166,6 +166,47 @@ function Holding({ r }: { r: Risk }) {
   )
 }
 
+/** The risk score after each market update, newest first. Hidden until the AWS job has stored any. */
+function Trend({ pid }: { pid: string }) {
+  const q = useApi<RiskSnapshot[]>(`/portfolio/${pid}/risk/history?limit=10`)
+  const h = q.data ?? []
+  if (h.length === 0) return null
+  const [now, first] = [h[0], h[h.length - 1]]
+  const moved = now.risk_score - first.risk_score
+  return (
+    <Card
+      title={
+        h.length === 1
+          ? `Risk score ${now.risk_score} after the last market update (${day(now.as_of)}).`
+          : moved === 0
+            ? `Risk score has held at ${now.risk_score} over the last ${h.length} market updates.`
+            : `Risk score has ${moved > 0 ? 'risen' : 'fallen'} from ${first.risk_score} to ${now.risk_score} over the last ${h.length} market updates.`
+      }
+      dek="Recorded after each weekday close on the default 1-year window and 95% confidence, so it can differ from a score read with other settings."
+    >
+      <ul>
+        {h.map((s, i) => {
+          const prev = h[i + 1]
+          return (
+            <li key={s.as_of} className="grid grid-cols-[6.5rem_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-line-soft py-1.5 text-[0.9rem]">
+              <span className="num text-ink-2">{day(s.as_of)}</span>
+              <span>
+                <span className="num font-bold">{s.risk_score}</span> <span className="text-ink-2">{s.risk_band}</span>
+              </span>
+              {prev ? (
+                // Neutral ink: a rising risk score is neither a gain nor a loss, so the sign carries it.
+                <span className="num text-ink-2">{signed(s.risk_score - prev.risk_score, 0)}</span>
+              ) : (
+                <span className="text-ink-3">first</span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
+  )
+}
+
 export function RiskPage({ pid, reference }: { pid: string; reference: Reference }) {
   const [lookback, setLookback] = useState(252)
   const [confidence, setConfidence] = useState(0.95)
@@ -243,6 +284,7 @@ export function RiskPage({ pid, reference }: { pid: string; reference: Reference
       </Status>
       <div className="grid gap-5">
         {q.data && <Holding r={q.data} />}
+        <Trend pid={pid} />
         <Stress pid={pid} reference={reference} />
       </div>
     </div>

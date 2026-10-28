@@ -28,7 +28,7 @@ from app.analytics.sentiment import ticker_sentiment
 from app.config import get_settings
 from app.models.allocation import AllocationItem, AllocationReport, SectorShift, Stats
 from app.models.exposure import ExposureReport, StressRequest, StressResult
-from app.models.news import PortfolioNews
+from app.models.news import NewsAlert, PortfolioNews
 from app.models.portfolio import (
     AssetType,
     Holding,
@@ -39,7 +39,7 @@ from app.models.portfolio import (
     ValueHistory,
 )
 from app.models.recommendation import RecommendationReport
-from app.models.risk import RiskReport
+from app.models.risk import RiskReport, RiskSnapshot
 from app.services.cas_import import load_registry
 from app.services.fund_holdings import load_holdings
 from app.services.market_data import load_prices
@@ -119,6 +119,13 @@ def create_portfolio(body: PortfolioCreate, user: User, store: Store) -> dict[st
 @router.get("")
 def list_portfolios(user: User, store: Store) -> list[dict]:
     return [p.model_dump(include={"portfolio_id", "name", "created_at"}) for p in store.list(user)]
+
+
+# Declared before /{portfolio_id}: "alerts" would otherwise match that route and fail its id pattern.
+@router.get("/alerts")
+def get_alerts(user: User, store: Store, limit: Annotated[int, Query(ge=1, le=100)] = 20) -> list[NewsAlert]:
+    """My negative-news alerts across all portfolios, newest first (AP6). Empty locally."""
+    return [NewsAlert(**i) for i in store.snapshots(user, "ALERT#", limit)]
 
 
 def load_market(since: date) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -201,6 +208,20 @@ def exposure_for(p: Portfolio, snap: PortfolioSnapshot) -> ExposureReport:
     return effective_exposure(
         p.portfolio_id, snap.as_of, weights[AssetType.STOCK], weights[AssetType.MF], holdings, stock_sectors()
     )
+
+
+@router.get("/{portfolio_id}/risk/history")
+def get_risk_history(
+    portfolio_id: PortfolioId,
+    user: User,
+    store: Store,
+    limit: Annotated[int, Query(ge=1, le=365)] = 30,
+) -> list[RiskSnapshot]:
+    """Risk snapshots stored by the risk_refresh job after each market update, newest first (AP4)."""
+    owned(store, user, portfolio_id)
+    prefix = f"PORTFOLIO#{portfolio_id}#RISK#"
+    items = store.snapshots(user, prefix, limit)
+    return [RiskSnapshot(as_of=i["SK"].removeprefix(prefix), **i) for i in items]
 
 
 @router.get("/{portfolio_id}/exposure")

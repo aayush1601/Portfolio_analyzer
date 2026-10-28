@@ -37,3 +37,12 @@ class PortfolioNews(BaseModel):
     alert_threshold: float
     items: list[NewsImpactItem]  # most impactful first
     notes: list[str]
+
+
+class NewsAlert(BaseModel):
+    """A stored negative-news alert (AP6), written by the news_impact job."""
+
+    portfolio_id: str
+    type: str
+    impact: float
+    created_at: datetime

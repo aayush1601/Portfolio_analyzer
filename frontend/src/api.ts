@@ -122,6 +122,18 @@ export type PortfolioNews = {
   notes: string[]
 }
 
+/** Stored by the risk_refresh job after each market update (AWS only; empty locally). */
+export type RiskSnapshot = {
+  as_of: string
+  risk_score: number
+  risk_band: string
+  volatility_ann: number
+  var_1d: number
+  weights_version: string
+}
+/** Stored by the news_impact job, at most one per portfolio per 24 h (AWS only; empty locally). */
+export type NewsAlert = { portfolio_id: string; type: string; impact: number; created_at: string }
+
 export type Recommendation = {
   asset_id: string
   asset_type: AssetType

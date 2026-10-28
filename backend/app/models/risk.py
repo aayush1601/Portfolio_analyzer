@@ -59,3 +59,14 @@ class RiskReport(BaseModel):
     holding_mean_return_ann: float  # the average return they assume continues
     return_histogram: Histogram  # the portfolio's daily returns over the window, for the tail chart
     notes: list[str]
+
+
+class RiskSnapshot(BaseModel):
+    """One stored risk_refresh result (AP4); newest first in /risk/history."""
+
+    as_of: date
+    risk_score: int
+    risk_band: str
+    volatility_ann: float
+    var_1d: float  # historical 1-day VaR
+    weights_version: str

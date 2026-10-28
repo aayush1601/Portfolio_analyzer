@@ -74,3 +74,15 @@ class DynamoPortfolioStore:
 
     def put_snapshot(self, user: str, sk: str, data: dict) -> None:
         self.table.put_item(Item={"PK": f"USER#{user}", "SK": sk, **data})
+
+    # quoted: inside the class body `list` is the method above, not the builtin
+    def snapshots(self, user: str, prefix: str, limit: int = 50, since: str = "") -> "list[dict]":
+        """Items under `prefix`, newest first (AP4/AP6). SKs end in an ISO date or timestamp, so `since`
+        (same format) bounds the range without a filter."""
+        from boto3.dynamodb.conditions import Key
+
+        sk = Key("SK").between(prefix + since, prefix + "~") if since else Key("SK").begins_with(prefix)
+        page = self.table.query(
+            KeyConditionExpression=Key("PK").eq(f"USER#{user}") & sk, ScanIndexForward=False, Limit=limit
+        )
+        return page["Items"]

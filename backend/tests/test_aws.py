@@ -194,6 +194,40 @@ def test_news_impact_alerts_by_sns_and_records_the_alert(aws, monkeypatch):
     items = boto3.resource("dynamodb").Table(TABLE).scan()["Items"]
     alert = [i for i in items if i["SK"].startswith("ALERT#")]
     assert len(alert) == 1 and alert[0]["portfolio_id"] == pid and float(alert[0]["impact"]) == -0.05
+    # the next NewsScored, minutes later, must not email the same portfolio again
+    assert handlers.news_impact({}, None) == {"alerts": 0}
+
+
+def test_alerts_and_risk_history_are_served_newest_first(aws):
+    from fastapi.testclient import TestClient
+
+    from app.api import portfolio as api
+    from app.aws.handlers import _ddb
+    from app.main import app
+
+    store = api.get_store()
+    pid, other = (p.portfolio_id for p in store.list("local")[:2])
+    for d, score in (("2026-10-01", 40), ("2026-10-02", 55)):
+        store.put_snapshot(
+            "local",
+            f"PORTFOLIO#{pid}#RISK#{d}",
+            _ddb({"risk_score": score, "risk_band": "Moderate", "volatility_ann": 0.18, "var_1d": 0.02,
+                  "weights_version": "v2"}),
+        )  # fmt: skip
+    store.put_snapshot("local", f"PORTFOLIO#{other}#RISK#2026-10-03", {"risk_score": 1})  # not this portfolio
+    for ts in ("2026-10-01T10:00:00+00:00", "2026-10-02T10:00:00+00:00"):
+        store.put_snapshot(
+            "local",
+            f"ALERT#{ts}#{pid}",
+            _ddb({"type": "negative_news", "portfolio_id": pid, "impact": -0.03, "created_at": ts}),
+        )
+    client = TestClient(app)
+
+    hist = client.get(f"/portfolio/{pid}/risk/history").json()
+    assert [(h["as_of"], h["risk_score"]) for h in hist] == [("2026-10-02", 55), ("2026-10-01", 40)]
+    alerts = client.get("/portfolio/alerts?limit=1").json()
+    assert len(alerts) == 1 and alerts[0]["created_at"].startswith("2026-10-02")
+    assert client.get("/portfolio/abcdefabcdef/risk/history").status_code == 404
 
 
 def test_import_tokens_live_in_dynamodb_so_any_container_sees_them(aws):

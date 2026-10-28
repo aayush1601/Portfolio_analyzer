@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { SignedBar } from '../charts'
-import { useApi, type NewsItem, type PortfolioNews } from '../api'
+import { useApi, type NewsAlert, type NewsItem, type PortfolioNews } from '../api'
 import { dateTime, fixed, pct, signed } from '../format'
 import { reorder, slug } from '../motion'
 import { Avatar, Card, Chip, IconAlert, IconExternal, Notes, Plate, Segmented, Status } from '../ui'
@@ -55,6 +55,31 @@ function Item({ i, max }: { i: NewsItem; max: number }) {
         <p className="hidden text-[0.75rem] text-ink-3 md:block">exposure {pct(i.effective_exposure)}</p>
       </div>
     </li>
+  )
+}
+
+/** Alerts the news_impact job raised (and emailed, when SNS is set up) for this portfolio. Hidden until the AWS job has sent any. */
+function Alerts({ pid }: { pid: string }) {
+  const q = useApi<NewsAlert[]>('/portfolio/alerts?limit=100')
+  const mine = (q.data ?? []).filter((a) => a.portfolio_id === pid)
+  if (mine.length === 0) return null
+  return (
+    <Card
+      title={`${mine.length === 1 ? 'One negative-news alert' : `${mine.length} negative-news alerts`} raised for this portfolio, the latest on ${dateTime(mine[0].created_at)}.`}
+      dek="Sent when portfolio impact crosses the alert threshold, at most once a day per portfolio."
+    >
+      <ul>
+        {mine.map((a) => (
+          <li key={a.created_at} className="flex items-center justify-between gap-3 border-b border-line-soft py-1.5 text-[0.9rem]">
+            <span className="flex items-center gap-2">
+              <IconAlert className="size-4 shrink-0 text-loss" />
+              <span className="num text-ink-2">{dateTime(a.created_at)}</span>
+            </span>
+            <span className="num font-bold">impact {signed(a.impact, 3)}</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
   )
 }
 
@@ -113,6 +138,7 @@ export function NewsPage({ pid }: { pid: string }) {
                 </ul>
               )}
             </Card>
+            <Alerts pid={pid} />
           </div>
         )
       }}

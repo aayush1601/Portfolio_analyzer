@@ -53,6 +53,10 @@ class PortfolioStore:
     def put_snapshot(self, user: str, sk: str, data: dict) -> None:
         """Locally, risk snapshots and alerts are not persisted (DynamoDB only)."""
 
+    # quoted: inside the class body `list` is the method above, not the builtin
+    def snapshots(self, user: str, prefix: str, limit: int = 50, since: str = "") -> "list[dict]":
+        return []
+
     def get(self, user: str, portfolio_id: str) -> Portfolio | None:
         f = self._dir(user) / f"{portfolio_id}.json"
         return Portfolio.model_validate_json(f.read_text()) if f.exists() else None
