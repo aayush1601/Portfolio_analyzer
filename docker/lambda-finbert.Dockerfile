@@ -14,5 +14,8 @@ RUN python -c "from transformers import AutoModelForSequenceClassification as M,
 M.from_pretrained('ProsusAI/finbert'); T.from_pretrained('ProsusAI/finbert')"
 COPY backend/app ${LAMBDA_TASK_ROOT}/app
 COPY config ${LAMBDA_TASK_ROOT}/config
+# Lambda runs as a non-root user: files copied with owner-only permissions (e.g. 600 on a laptop) would fail
+# to import with PermissionError, so make the code and config world-readable whatever the checkout's modes.
+RUN chmod -R a+rX ${LAMBDA_TASK_ROOT}/app ${LAMBDA_TASK_ROOT}/config
 ENV CONFIG_DIR=${LAMBDA_TASK_ROOT}/config DATA_DIR=/tmp/data STORAGE=s3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 CMD ["app.aws.handlers.news_score"]

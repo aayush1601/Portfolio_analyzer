@@ -8,5 +8,8 @@ RUN cd /tmp/build && uv export --frozen --no-dev --no-hashes --format requiremen
     && rm -rf /tmp/build
 COPY backend/app ${LAMBDA_TASK_ROOT}/app
 COPY config ${LAMBDA_TASK_ROOT}/config
+# Lambda runs as a non-root user: files copied with owner-only permissions (e.g. 600 on a laptop) would fail
+# to import with PermissionError, so make the code and config world-readable whatever the checkout's modes.
+RUN chmod -R a+rX ${LAMBDA_TASK_ROOT}/app ${LAMBDA_TASK_ROOT}/config
 ENV CONFIG_DIR=${LAMBDA_TASK_ROOT}/config DATA_DIR=/tmp/data STORAGE=s3
 CMD ["app.aws.handlers.api"]
