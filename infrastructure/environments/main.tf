@@ -77,6 +77,7 @@ locals {
     Version = "2012-10-17"
     Statement = concat(local.data_access, [
       { Effect = "Allow", Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query"], Resource = module.storage.table_arn },
+      { Effect = "Allow", Action = ["lambda:InvokeFunction"], Resource = "arn:aws:lambda:${var.region}:${local.account}:function:${local.name}-backtest" },
     ])
   })
   # The jobs walk every portfolio (Scan) and drive the event pipeline.
@@ -105,7 +106,7 @@ module "api" {
   name        = local.name
   image_tag   = var.image_tag
   policy_json = local.api_policy
-  environment = merge(local.base_env, { AUTH_REQUIRED = "true" })
+  environment = merge(local.base_env, { AUTH_REQUIRED = "true", BACKTEST_FUNCTION = "${local.name}-backtest" })
 }
 
 module "pipeline" {

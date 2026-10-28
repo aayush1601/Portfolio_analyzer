@@ -226,3 +226,26 @@ def test_secrets_come_from_ssm_and_skip_the_placeholder(aws, monkeypatch):
         assert s.alphavantage_api_key.get_secret_value() == "k-123" and s.storage == "s3"
     finally:
         get_settings.cache_clear()
+
+
+def test_backtest_on_aws_is_handed_to_the_worker_lambda(aws, monkeypatch):
+    """A run takes over a minute, longer than API Gateway's 30 s: the API records QUEUED in S3 (so every
+    container's run list shows it) and invokes the backtest Lambda asynchronously; the worker writes DONE."""
+    from app.api import backtests
+    from app.aws import handlers
+
+    monkeypatch.setenv("BACKTEST_FUNCTION", "pi-test-backtest")
+    get_settings.cache_clear()
+    calls = []
+    monkeypatch.setattr(backtests, "_invoke", lambda fn, payload: calls.append((fn, payload)))
+    monkeypatch.setattr(backtests.svc, "run", lambda overrides, run_id: {"run_id": run_id})
+
+    out = backtests.start(backtests.BacktestRequest(cost_bps=5), background=None)
+    assert out["status"] == "QUEUED"
+    assert calls == [("pi-test-backtest", {"run_id": out["run_id"], "overrides": {"cost_bps": 5.0}})]
+    key = f"backtests/{out['run_id']}/results.json"
+    body = boto3.client("s3").get_object(Bucket=BUCKET, Key=key)["Body"].read()
+    assert json.loads(body)["status"] == "QUEUED"
+
+    # the worker: runs and persists (svc.run is stubbed, so results.json stays as the API wrote it)
+    assert handlers.backtest(calls[0][1], None) == {"run_id": out["run_id"]}

@@ -43,6 +43,15 @@ def _ddb(value):
     return json.loads(json.dumps(value, default=str), parse_float=Decimal)
 
 
+def backtest(event, context):
+    """Async worker for POST /backtest: runs one backtest and persists results.json (or FAILED) to S3."""
+    from app.api.backtests import _run
+
+    sync_down(force=True)
+    _run(event["run_id"], event.get("overrides") or {})
+    return {"run_id": event["run_id"]}
+
+
 def market_ingest(event, context):
     from app.services import market_data
 

@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     event_bus: str | None = None  # custom EventBridge bus for pipeline events
     news_queue_url: str | None = None
     alerts_topic_arn: str | None = None
+    backtest_function: str | None = None  # Lambda that runs backtests (longer than API Gateway's 30 s limit)
 
     # Phase 17. auth_required: refuse requests without a verified Cognito identity (set on AWS).
     auth_required: bool = False

@@ -100,6 +100,7 @@ locals {
     holdings_ingest = { memory = 1536, timeout = 600 }
     news_impact     = { memory = 1536, timeout = 300 }
     risk_refresh    = { memory = 1536, timeout = 600 }
+    backtest        = { memory = 3008, timeout = 900 } # invoked by the API for POST /backtest, never scheduled
   }
 }
 
