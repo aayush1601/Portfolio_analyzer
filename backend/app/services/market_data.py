@@ -111,7 +111,9 @@ def read(path: Path, key: str, since: date | None = None) -> pd.DataFrame:
 
 
 def load_prices(data_dir: Path, since: date | None = None) -> pd.DataFrame:
-    return read(data_dir / "processed" / "market" / "prices", "symbol", since)
+    # One row per symbol and day even if a dataset was ever written twice (e.g. two copies in S3).
+    df = read(data_dir / "processed" / "market" / "prices", "symbol", since)
+    return df.drop_duplicates(["symbol", "date"], keep="last", ignore_index=True)
 
 
 def refresh(settings=None):

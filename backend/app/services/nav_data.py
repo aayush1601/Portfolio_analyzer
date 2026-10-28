@@ -56,7 +56,9 @@ def collect(codes: list[str], client: httpx.Client) -> pd.DataFrame:
 
 
 def load_navs(data_dir: Path, since: date | None = None) -> pd.DataFrame:
-    return read(data_dir / "processed" / "nav", "scheme_code", since)
+    # One row per scheme and day even if a dataset was ever written twice (e.g. two copies in S3).
+    df = read(data_dir / "processed" / "nav", "scheme_code", since)
+    return df.drop_duplicates(["scheme_code", "date"], keep="last", ignore_index=True)
 
 
 def refresh(settings=None):

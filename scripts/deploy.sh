@@ -34,7 +34,9 @@ $TF apply "${VARS[@]}"
 DATA="$($TF output -raw data_bucket)"; WEB="$($TF output -raw web_bucket)"; DIST="$($TF output -raw distribution_id)"
 
 echo "4/5 Seed S3 with the local data (prices, NAVs, news, sentiment, predictions, fund holdings)"
-aws s3 sync data/processed "s3://$DATA/processed" --exclude "*.DS_Store"
+# --delete: the jobs rewrite each dataset under new file names, so a plain sync would leave two copies of a
+# dataset in S3 (duplicate rows). Every processed dataset is rebuilt by the jobs, so the local copy can win.
+aws s3 sync data/processed "s3://$DATA/processed" --exclude "*.DS_Store" --exclude "* 2.*" --delete
 aws s3 sync data/raw/news "s3://$DATA/raw/news" --exclude "*.DS_Store"
 [ -d data/raw/mutual_funds ] && aws s3 sync data/raw/mutual_funds "s3://$DATA/raw/mutual_funds" --exclude "*.DS_Store"
 [ -d data/backtests ] && aws s3 sync data/backtests "s3://$DATA/backtests" --exclude "*.DS_Store"

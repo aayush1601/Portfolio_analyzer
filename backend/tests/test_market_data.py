@@ -76,3 +76,18 @@ def test_save_load_roundtrip_and_rerun_does_not_duplicate(raw, tmp_path):
     assert len(back) == len(p)
     cols = ["symbol", "date", "close"]
     pd.testing.assert_frame_equal(back[cols], p[cols], check_dtype=False)
+
+
+def test_load_prices_drops_duplicate_days(tmp_path):
+    """Two copies of a partition (as happened in S3) must not duplicate rows: pivots downstream would fail."""
+    import pandas as pd
+
+    from app.services.market_data import load_prices
+
+    day = pd.Timestamp("2026-10-27")
+    row = {"symbol": "TCS", "date": day, "close": 1.0, "adj_close": 1.0, "year": 2026}
+    part = tmp_path / "processed" / "market" / "prices" / "year=2026"
+    part.mkdir(parents=True)
+    for name in ("a.parquet", "b.parquet"):
+        pd.DataFrame([row]).drop(columns="year").to_parquet(part / name, index=False)
+    assert len(load_prices(tmp_path)) == 1

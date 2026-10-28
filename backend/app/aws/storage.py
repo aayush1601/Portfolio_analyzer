@@ -1,6 +1,8 @@
 """Lambda data access: mirror S3 into /tmp so the same file-based code runs locally and on AWS.
 
-Reads: `sync_down()` copies new or changed objects under the given prefixes into data_dir. Many Lambda
+Reads: `sync_down()` copies new or changed objects under the given prefixes into data_dir and deletes local
+files that are no longer in S3 (a rewritten dataset gets new file names; keeping the old ones would duplicate
+rows). Many Lambda
 containers serve the API, so every write bumps a small VERSION_KEY object: each request checks it with one
 HEAD and re-syncs only when another container (or a pipeline job) has written since. Writes: `persist(rel)`
 uploads data_dir/rel (a file or a whole dataset folder) back to S3, deletes objects the local folder no longer
@@ -43,8 +45,10 @@ def sync_down(prefixes: tuple[str, ...] = PREFIXES, force: bool = False) -> int:
     if not force and version == _seen_version:
         return 0
     for prefix in prefixes:
+        remote: set[str] = set()
         for obj in _objects(client, s.s3_bucket, prefix):
             key, etag = obj["Key"], obj["ETag"]
+            remote.add(key)
             dest = s.data_dir / key
             if _etags.get(key) == etag and dest.exists():
                 continue
@@ -52,8 +56,21 @@ def sync_down(prefixes: tuple[str, ...] = PREFIXES, force: bool = False) -> int:
             client.download_file(s.s3_bucket, key, str(dest))
             _etags[key] = etag
             fetched += 1
+        _prune(s.data_dir, prefix, remote)
     _seen_version = version
     return fetched
+
+
+def _prune(root: Path, prefix: str, remote: set[str]) -> None:
+    """Delete files under root/prefix that S3 no longer has (data_dir on Lambda is a private /tmp mirror)."""
+    base = root / prefix
+    if not base.exists():
+        return
+    for p in base.rglob("*"):
+        key = str(p.relative_to(root))
+        if p.is_file() and key not in remote:
+            p.unlink()
+            _etags.pop(key, None)
 
 
 def _version(client, bucket: str) -> str:
